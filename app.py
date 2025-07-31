@@ -13,7 +13,12 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 app.config['DATABASE_PATH'] = os.environ.get('DATABASE_PATH') or 'data'
 
 # Database files
-MAIN_DB_FILE = f"{app.config['DATABASE_PATH']}/main.db"  # For user management
+def get_main_db_file():
+    """Get the main database file path"""
+    db_path = f"{app.config['DATABASE_PATH']}/main.db"
+    print(f"DEBUG: Database path: {db_path}")
+    print(f"DEBUG: DATABASE_PATH config: {app.config['DATABASE_PATH']}")
+    return db_path
 
 def get_user_db_file(username):
     """Get the database file for a specific user"""
@@ -23,10 +28,12 @@ def init_main_db():
     """Initialize the main database for user management"""
     import os
     
-    # Ensure data directory exists
-    os.makedirs(os.path.dirname(MAIN_DB_FILE), exist_ok=True)
+    main_db_file = get_main_db_file()
     
-    conn = sqlite3.connect(MAIN_DB_FILE)
+    # Ensure data directory exists
+    os.makedirs(os.path.dirname(main_db_file), exist_ok=True)
+    
+    conn = sqlite3.connect(main_db_file)
     c = conn.cursor()
     
     # Create users table
@@ -185,9 +192,10 @@ def login():
         
         # Ensure main database directory exists
         import os
-        os.makedirs(os.path.dirname(MAIN_DB_FILE), exist_ok=True)
+        main_db_file = get_main_db_file()
+        os.makedirs(os.path.dirname(main_db_file), exist_ok=True)
         
-        conn = sqlite3.connect(MAIN_DB_FILE)
+        conn = sqlite3.connect(main_db_file)
         c = conn.cursor()
         c.execute('SELECT password_hash FROM users WHERE username = ?', (username,))
         result = c.fetchone()
@@ -225,9 +233,10 @@ def register():
         
         # Ensure main database directory exists
         import os
-        os.makedirs(os.path.dirname(MAIN_DB_FILE), exist_ok=True)
+        main_db_file = get_main_db_file()
+        os.makedirs(os.path.dirname(main_db_file), exist_ok=True)
         
-        conn = sqlite3.connect(MAIN_DB_FILE)
+        conn = sqlite3.connect(main_db_file)
         c = conn.cursor()
         
         try:
