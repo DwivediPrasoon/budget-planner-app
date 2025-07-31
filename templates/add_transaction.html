@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Transaction - Budget Planner</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Budget Planner">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .transaction-type-toggle {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn.active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .toggle-btn:not(.active) {
+            color: #666;
+        }
+        
+        .toggle-btn.expense:not(.active) {
+            color: #dc3545;
+        }
+        
+        .toggle-btn.income:not(.active) {
+            color: #28a745;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: #fff;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .category-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .category-chip {
+            background: #e9ecef;
+            color: #495057;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .category-chip:hover {
+            background: #007bff;
+            color: white;
+        }
+        
+        .amount-input {
+            position: relative;
+        }
+        
+        .amount-input::before {
+            content: '₹';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .amount-input input {
+            padding-left: 35px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                margin: -15px -15px 15px -15px;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>➕ Add Transaction</h1>
+        </div>
+        
+        <div class="form-container">
+            <form method="post">
+                <div class="transaction-type-toggle">
+                    <button type="button" class="toggle-btn expense active" onclick="setTransactionType('expense')">
+                        💸 Expense
+                    </button>
+                    <button type="button" class="toggle-btn income" onclick="setTransactionType('income')">
+                        💰 Income
+                    </button>
+                </div>
+                
+                <input type="hidden" id="type" name="type" value="expense">
+                
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" required value="{{ today }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <div class="amount-input">
+                        <input type="number" step="0.01" id="amount" name="amount" required placeholder="0.00" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" name="category" required placeholder="e.g., Food, Transport">
+                    <div class="category-suggestions" id="categorySuggestions">
+                        <!-- Categories will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description (Optional)</label>
+                    <textarea id="description" name="description" placeholder="Add details about this transaction..."></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">Add Transaction</button>
+            </form>
+        </div>
+        
+        <a href="{{ url_for('index') }}" class="back-link">← Back to Dashboard</a>
+    </div>
+    
+    <script>
+        // Set today's date as default
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        
+        // Check URL parameters for pre-selected type
+        const urlParams = new URLSearchParams(window.location.search);
+        const preSelectedType = urlParams.get('type');
+        
+        // Transaction type toggle
+        function setTransactionType(type) {
+            document.getElementById('type').value = type;
+            
+            // Update button styles
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Find and activate the correct button
+            const targetButton = document.querySelector(`.toggle-btn.${type}`);
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
+            
+            // Update category suggestions
+            updateCategorySuggestions(type);
+        }
+        
+        // Load categories from database
+        function loadCategories(type) {
+            fetch(`/api/categories?type=${type}`)
+                .then(response => response.json())
+                .then(categories => {
+                    const container = document.getElementById('categorySuggestions');
+                    container.innerHTML = categories.map(category => 
+                        `<span class="category-chip" onclick="setCategory('${category}')">${category}</span>`
+                    ).join('');
+                });
+        }
+        
+        // Update category suggestions based on transaction type
+        function updateCategorySuggestions(type) {
+            loadCategories(type);
+        }
+        
+        // Initialize with pre-selected type or default to expense
+        if (preSelectedType) {
+            setTransactionType(preSelectedType);
+        } else {
+            // Default to expense
+            setTransactionType('expense');
+        }
+        
+        // Category chip functionality
+        function setCategory(category) {
+            document.getElementById('category').value = category;
+        }
+        
+        // PWA installation prompt
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js')
+                .then(function(registration) {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Planner - Dashboard</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Budget Planner">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .username {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .budget-btn {
+            background: linear-gradient(135deg, #6f42c1, #e83e8c);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .budget-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+        }
+        
+        .nav-btn {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .add-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+        
+        .quick-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 160px;
+            justify-content: center;
+        }
+        
+        .income-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .income-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .expense-btn {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+            color: white;
+        }
+        
+        .expense-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+        
+        .btn-text {
+            font-weight: 600;
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        
+        .flash-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .flash-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .charts-dropdown {
+            margin-top: 30px;
+            margin-bottom: 25px;
+        }
+        
+        .charts-toggle {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .charts-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .toggle-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        
+        .toggle-text {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .toggle-arrow {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .charts-toggle.active .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .charts-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            margin-top: 15px;
+        }
+        
+        .charts-content.show {
+            max-height: 2000px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .summary-card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .summary-card .amount {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .summary-card.income .amount {
+            color: #28a745;
+        }
+        
+        .summary-card.expenses .amount {
+            color: #dc3545;
+        }
+        
+        .summary-card.balance .amount {
+            color: #007bff;
+        }
+        
+        .summary-card.spendable .amount {
+            color: #28a745;
+        }
+        
+        .summary-card.spendable .amount.negative {
+            color: #dc3545;
+        }
+        
+        .budget-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-header h3 {
+            color: #333;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        
+        .budget-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .budget-link:hover {
+            text-decoration: underline;
+        }
+        
+        .budget-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .budget-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .budget-category {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .budget-amount {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-fill.good {
+            background: #28a745;
+        }
+        
+        .progress-fill.warning {
+            background: #ffc107;
+        }
+        
+        .progress-fill.over {
+            background: #dc3545;
+        }
+        
+        .budget-percentage {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: right;
+        }
+        
+        .empty-budget {
+            text-align: center;
+            padding: 30px 20px;
+            color: #666;
+        }
+        
+        .empty-budget p {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .setup-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .setup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #007bff, #28a745, #ffc107, #dc3545);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .chart-container canvas {
+            max-height: 300px;
+        }
+        
+        .recent-transactions {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .recent-transactions h3 {
+            padding: 20px 20px 15px 20px;
+            color: #333;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .transaction-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .transaction-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+        
+        .transaction-info {
+            flex: 1;
+        }
+        
+        .transaction-date {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .transaction-category {
+            font-weight: 600;
+            color: #007bff;
+            margin-bottom: 4px;
+        }
+        
+        .transaction-description {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-right: 15px;
+        }
+        
+        .transaction-amount.income {
+            color: #28a745;
+        }
+        
+        .transaction-amount.expense {
+            color: #dc3545;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                margin: -15px -15px 15px -15px;
+                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            
+            .quick-btn {
+                min-width: auto;
+                padding: 12px 20px;
+            }
+            
+            .charts-toggle {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .transaction-item {
+                padding: 12px 15px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .transaction-amount {
+                margin-top: 8px;
+                align-self: flex-end;
+            }
+            
+            .delete-btn {
+                margin-top: 8px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>💰 Budget Dashboard</h1>
+                <div class="user-info">
+                    <span class="username">Welcome, {{ session['username'] }}!</span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+            <div class="header-buttons">
+                <a href="{{ url_for('categories') }}" class="nav-btn">🏷️ Categories</a>
+                <a href="{{ url_for('expected_expenses') }}" class="budget-btn">📊 Expected Expenses</a>
+                <a href="{{ url_for('templates') }}" class="nav-btn">📋 Templates</a>
+                <a href="{{ url_for('all_transactions') }}" class="nav-btn">📋 All Transactions</a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="quick-actions">
+            <a href="{{ url_for('add_transaction') }}?type=income" class="quick-btn income-btn">
+                <span class="btn-icon">💰</span>
+                <span class="btn-text">Add Income</span>
+            </a>
+            <a href="{{ url_for('add_transaction') }}?type=expense" class="quick-btn expense-btn">
+                <span class="btn-icon">💸</span>
+                <span class="btn-text">Add Expense</span>
+            </a>
+        </div>
+        
+        <div class="summary-cards">
+            <div class="summary-card income">
+                <h3>Total Income</h3>
+                <div class="amount">₹{{ "%.2f"|format(total_income) }}</div>
+            </div>
+            <div class="summary-card expenses">
+                <h3>Total Expenses</h3>
+                <div class="amount">₹{{ "%.2f"|format(total_expenses) }}</div>
+            </div>
+            <div class="summary-card balance">
+                <h3>Balance</h3>
+                <div class="amount">₹{{ "%.2f"|format(balance) }}</div>
+            </div>
+            <div class="summary-card spendable">
+                <h3>Spendable Money</h3>
+                <div class="amount {% if spendable_money < 0 %}negative{% endif %}">₹{{ "%.2f"|format(spendable_money) }}</div>
+            </div>
+        </div>
+        
+        {% if expected_vs_actual %}
+        <div class="budget-section">
+            <div class="section-header">
+                <h3>📊 Expected Expenses Tracking</h3>
+                <a href="{{ url_for('expected_expenses') }}" class="budget-link">Manage Expected Expenses</a>
+            </div>
+            <div class="budget-cards">
+                {% for expected in expected_vs_actual %}
+                {% set spent = expected[2] %}
+                {% set limit = expected[1] %}
+                {% set percentage = (spent / limit * 100) if limit > 0 else 0 %}
+                {% set status = 'over' if percentage > 100 else 'good' if percentage < 80 else 'warning' %}
+                <div class="budget-card">
+                    <div class="budget-header">
+                        <span class="budget-category">{{ expected[0] }}</span>
+                        <span class="budget-amount">₹{{ "%.2f"|format(spent) }} / ₹{{ "%.2f"|format(limit) }}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill {{ status }}" style="width: {{ [percentage, 100]|min }}%"></div>
+                    </div>
+                    <div class="budget-percentage">{{ "%.1f"|format(percentage) }}%</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="budget-section">
+            <div class="section-header">
+                <h3>📊 Expected Expenses Planning</h3>
+                <a href="{{ url_for('expected_expenses') }}" class="budget-link">Set Up Expected Expenses</a>
+            </div>
+            <div class="empty-budget">
+                <p>Set up expected expenses to track your spending and calculate spendable money!</p>
+                <a href="{{ url_for('add_expected_expense') }}" class="setup-btn">+ Add First Expected Expense</a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="recent-transactions">
+            <h3>Recent Transactions</h3>
+            {% if recent_transactions %}
+                {% for t in recent_transactions %}
+                <div class="transaction-item">
+                    <div class="transaction-info">
+                        <div class="transaction-date">{{ t[1] }}</div>
+                        <div class="transaction-category">{{ t[3] }}</div>
+                        {% if t[4] %}
+                        <div class="transaction-description">{{ t[4] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="transaction-amount {{ t[5] }}">
+                        ₹{{ "%.2f"|format(t[2]) }}
+                    </div>
+                    <form method="POST" action="{{ url_for('delete_transaction', transaction_id=t[0]) }}" style="display: inline;">
+                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this transaction?')">Delete</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h3>No transactions yet</h3>
+                    <p>Add your first transaction to get started!</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="charts-dropdown">
+            <button class="charts-toggle" onclick="toggleCharts()">
+                <span class="toggle-icon">📊</span>
+                <span class="toggle-text">Show Analytics</span>
+                <span class="toggle-arrow">▼</span>
+            </button>
+            <div class="charts-content" id="chartsContent">
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>📈 Monthly Income vs Expenses</h3>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>🍕 Expense Categories</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>💰 Budget vs Actual Spending</h3>
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>📊 Weekly Spending Trend</h3>
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>🎯 Savings Rate</h3>
+                        <canvas id="savingsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>📅 Category Spending Over Time</h3>
+                        <canvas id="categoryTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Enhanced chart configurations
+        const chartColors = {
+            primary: '#007bff',
+            success: '#28a745',
+            warning: '#ffc107',
+            danger: '#dc3545',
+            info: '#17a2b8',
+            purple: '#6f42c1',
+            orange: '#fd7e14',
+            teal: '#20c997',
+            pink: '#e83e8c'
+        };
+
+        // Load chart data
+        fetch('/api/chart-data')
+            .then(response => response.json())
+            .then(data => {
+                // Enhanced Monthly Income vs Expenses Chart
+                const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+                new Chart(monthlyCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.monthly.map(item => {
+                            const [year, month] = item.month.split('-');
+                            return new Date(year, month - 1).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                year: 'numeric' 
+                            });
+                        }),
+                        datasets: [{
+                            label: '💰 Income',
+                            data: data.monthly.map(item => item.income),
+                            borderColor: chartColors.success,
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: chartColors.success,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        }, {
+                            label: '💸 Expenses',
+                            data: data.monthly.map(item => item.expenses),
+                            borderColor: chartColors.danger,
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: chartColors.danger,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 12,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: chartColors.primary,
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                displayColors: true
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value.toLocaleString();
+                                    },
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+                
+                // Enhanced Category Chart
+                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+                new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.categories.map(item => item.category),
+                        datasets: [{
+                            data: data.categories.map(item => item.total),
+                            backgroundColor: [
+                                chartColors.primary, chartColors.success, chartColors.warning, 
+                                chartColors.danger, chartColors.purple, chartColors.orange, 
+                                chartColors.teal, chartColors.pink
+                            ],
+                            borderWidth: 3,
+                            borderColor: '#fff',
+                            hoverBorderWidth: 4,
+                            hoverBorderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 11,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: chartColors.primary,
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                        return context.label + ': ₹' + context.parsed.toLocaleString() + ' (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+
+                // Expected vs Actual Chart
+                const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+                if (data.expected && data.expected.length > 0) {
+                    new Chart(budgetCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.expected.map(item => item.category),
+                            datasets: [{
+                                label: '📋 Expected Amount',
+                                data: data.expected.map(item => item.limit),
+                                backgroundColor: chartColors.info,
+                                borderColor: chartColors.info,
+                                borderWidth: 2,
+                                borderRadius: 8
+                            }, {
+                                label: '💸 Actual Spent',
+                                data: data.expected.map(item => item.spent),
+                                backgroundColor: chartColors.danger,
+                                borderColor: chartColors.danger,
+                                borderWidth: 2,
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: chartColors.primary,
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.label + ': ₹' + context.parsed.toLocaleString();
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)',
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString();
+                                        },
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Show empty state for budget chart
+                    const budgetChart = document.getElementById('budgetChart');
+                    budgetChart.style.display = 'flex';
+                    budgetChart.style.alignItems = 'center';
+                    budgetChart.style.justifyContent = 'center';
+                    budgetChart.style.height = '200px';
+                    budgetChart.style.color = '#666';
+                    budgetChart.style.fontSize = '14px';
+                    budgetChart.innerHTML = '<div style="text-align: center;"><p>No budget data available</p><p>Set up budgets to see this chart</p></div>';
+                }
+
+                // Weekly Spending Trend Chart
+                const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+                if (data.weekly && data.weekly.length > 0) {
+                    new Chart(weeklyCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.weekly.map(item => item.week),
+                            datasets: [{
+                                label: '💸 Weekly Spending',
+                                data: data.weekly.map(item => item.amount),
+                                borderColor: chartColors.warning,
+                                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: chartColors.warning,
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 5
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: chartColors.primary,
+                                    borderWidth: 1,
+                                    cornerRadius: 8
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)',
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '₹' + value.toLocaleString();
+                                        },
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Show empty state for weekly chart
+                    const weeklyChart = document.getElementById('weeklyChart');
+                    weeklyChart.style.display = 'flex';
+                    weeklyChart.style.alignItems = 'center';
+                    weeklyChart.style.justifyContent = 'center';
+                    weeklyChart.style.height = '200px';
+                    weeklyChart.style.color = '#666';
+                    weeklyChart.style.fontSize = '14px';
+                    weeklyChart.innerHTML = '<div style="text-align: center;"><p>No weekly data available</p><p>Add transactions to see trends</p></div>';
+                }
+
+                // Savings Rate Chart
+                const savingsCtx = document.getElementById('savingsChart').getContext('2d');
+                if (data.savings) {
+                    new Chart(savingsCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['💾 Savings', '💸 Expenses'],
+                            datasets: [{
+                                data: [data.savings.rate, 100 - data.savings.rate],
+                                backgroundColor: [chartColors.success, chartColors.danger],
+                                borderWidth: 3,
+                                borderColor: '#fff',
+                                hoverBorderWidth: 4,
+                                hoverBorderColor: '#fff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: chartColors.primary,
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '70%'
+                        }
+                    });
+                } else {
+                    // Show empty state for savings chart
+                    const savingsChart = document.getElementById('savingsChart');
+                    savingsChart.style.display = 'flex';
+                    savingsChart.style.alignItems = 'center';
+                    savingsChart.style.justifyContent = 'center';
+                    savingsChart.style.height = '200px';
+                    savingsChart.style.color = '#666';
+                    savingsChart.style.fontSize = '14px';
+                    savingsChart.innerHTML = '<div style="text-align: center;"><p>No savings data available</p><p>Add income and expenses to see savings rate</p></div>';
+                }
+
+                // Category Spending Over Time Chart
+                const categoryTrendCtx = document.getElementById('categoryTrendChart').getContext('2d');
+                if (data.categoryTrends && data.categoryTrends.length > 0) {
+                    new Chart(categoryTrendCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.categoryTrends.map(item => item.month),
+                            datasets: data.categoryTrends[0].categories.map((category, index) => ({
+                                label: category,
+                                data: data.categoryTrends.map(item => item.amounts[index] || 0),
+                                backgroundColor: Object.values(chartColors)[index % Object.values(chartColors).length],
+                                borderColor: Object.values(chartColors)[index % Object.values(chartColors).length],
+                                borderWidth: 2,
+                                borderRadius: 6
+                            }))
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 11,
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: chartColors.primary,
+                                    borderWidth: 1,
+                                    cornerRadius: 8
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)',
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '₹' + value.toLocaleString();
+                                        },
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            weight: 'bold'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Show empty state for category trend chart
+                    const categoryTrendChart = document.getElementById('categoryTrendChart');
+                    categoryTrendChart.style.display = 'flex';
+                    categoryTrendChart.style.alignItems = 'center';
+                    categoryTrendChart.style.justifyContent = 'center';
+                    categoryTrendChart.style.height = '200px';
+                    categoryTrendChart.style.color = '#666';
+                    categoryTrendChart.style.fontSize = '14px';
+                    categoryTrendChart.innerHTML = '<div style="text-align: center;"><p>No category trend data available</p><p>Add transactions to see spending patterns</p></div>';
+                }
+            });
+        
+        // Charts toggle function
+        function toggleCharts() {
+            const chartsContent = document.getElementById('chartsContent');
+            const toggleButton = document.querySelector('.charts-toggle');
+            
+            chartsContent.classList.toggle('show');
+            toggleButton.classList.toggle('active');
+            
+            // Update button text
+            const toggleText = toggleButton.querySelector('.toggle-text');
+            if (chartsContent.classList.contains('show')) {
+                toggleText.textContent = 'Hide Analytics';
+            } else {
+                toggleText.textContent = 'Show Analytics';
+            }
+        }
+        
+        // PWA installation prompt
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js')
+                .then(function(registration) {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                });
+        }
+    </script>
+</body>
+</html> 
