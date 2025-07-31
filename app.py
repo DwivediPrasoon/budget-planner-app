@@ -183,6 +183,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
+        # Ensure main database directory exists
+        import os
+        os.makedirs(os.path.dirname(MAIN_DB_FILE), exist_ok=True)
+        
         conn = sqlite3.connect(MAIN_DB_FILE)
         c = conn.cursor()
         c.execute('SELECT password_hash FROM users WHERE username = ?', (username,))
@@ -218,6 +222,10 @@ def register():
         if len(password) < 6:
             flash('Password must be at least 6 characters long', 'error')
             return render_template('register.html')
+        
+        # Ensure main database directory exists
+        import os
+        os.makedirs(os.path.dirname(MAIN_DB_FILE), exist_ok=True)
         
         conn = sqlite3.connect(MAIN_DB_FILE)
         c = conn.cursor()
