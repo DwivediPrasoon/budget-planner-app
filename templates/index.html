@@ -48,6 +48,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         .header-left {
@@ -88,6 +90,7 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
         
         .budget-btn {
@@ -601,6 +604,22 @@
                 gap: 15px;
             }
             
+            .header-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                width: 100%;
+            }
+            
+            .nav-btn, .budget-btn {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+                text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
             .header h1 {
                 font-size: 1.5rem;
             }
@@ -655,9 +674,9 @@
             </div>
             <div class="header-buttons">
                 <a href="{{ url_for('categories') }}" class="nav-btn">🏷️ Categories</a>
-                <a href="{{ url_for('expected_expenses') }}" class="budget-btn">📊 Expected Expenses</a>
+                <a href="{{ url_for('expected_expenses') }}" class="budget-btn">📊 Expenses</a>
                 <a href="{{ url_for('templates') }}" class="nav-btn">📋 Templates</a>
-                <a href="{{ url_for('all_transactions') }}" class="nav-btn">📋 All Transactions</a>
+                <a href="{{ url_for('all_transactions') }}" class="nav-btn">📋 Transactions</a>
             </div>
         </div>
         
