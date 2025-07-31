@@ -30,6 +30,8 @@ def init_main_db():
     
     main_db_file = get_main_db_file()
     
+    print(f"DEBUG: Initializing main database at: {main_db_file}")
+    
     # Ensure data directory exists
     os.makedirs(os.path.dirname(main_db_file), exist_ok=True)
     
@@ -45,6 +47,8 @@ def init_main_db():
             created_date TEXT DEFAULT CURRENT_DATE
         )
     ''')
+    
+    print(f"DEBUG: Users table created/verified successfully")
     
     conn.commit()
     conn.close()
@@ -190,10 +194,13 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        # Ensure main database directory exists
+        # Ensure main database directory exists and initialize database
         import os
         main_db_file = get_main_db_file()
         os.makedirs(os.path.dirname(main_db_file), exist_ok=True)
+        
+        # Initialize main database (creates users table if it doesn't exist)
+        init_main_db()
         
         conn = sqlite3.connect(main_db_file)
         c = conn.cursor()
@@ -231,10 +238,13 @@ def register():
             flash('Password must be at least 6 characters long', 'error')
             return render_template('register.html')
         
-        # Ensure main database directory exists
+        # Ensure main database directory exists and initialize database
         import os
         main_db_file = get_main_db_file()
         os.makedirs(os.path.dirname(main_db_file), exist_ok=True)
+        
+        # Initialize main database (creates users table if it doesn't exist)
+        init_main_db()
         
         conn = sqlite3.connect(main_db_file)
         c = conn.cursor()
