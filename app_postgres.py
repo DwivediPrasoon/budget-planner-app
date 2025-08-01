@@ -140,6 +140,7 @@ def index():
                            monthly_data=[],
                            category_data=[],
                            spendable_money=0,
+                           balance=0,
                            total_expected=0)
     
     try:
@@ -191,6 +192,9 @@ def index():
         # Calculate spendable money
         spendable_money = total_income - total_expenses - total_expected
         
+        # Calculate balance (income - expenses, without expected expenses)
+        balance = total_income - total_expenses
+        
         # Monthly data for charts (last 6 months)
         cur.execute('''
             SELECT 
@@ -225,6 +229,7 @@ def index():
                            monthly_data=monthly_data,
                            category_data=category_data,
                            spendable_money=spendable_money,
+                           balance=balance,
                            total_expected=total_expected)
                            
     except Exception as e:
@@ -237,6 +242,7 @@ def index():
                            monthly_data=[],
                            category_data=[],
                            spendable_money=0,
+                           balance=0,
                            total_expected=0)
 
 @app.route('/login', methods=['GET', 'POST'])
