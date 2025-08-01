@@ -1018,38 +1018,7 @@ def categories():
                 ORDER BY type, name
             ''', (user_id,))
             categories = cur.fetchall()
-        else:
-            # Check if Credit Card categories exist, add if not
-            cur.execute('''
-                SELECT name FROM categories 
-                WHERE user_id = %s AND name IN ('Credit Card', 'Credit Card Payment')
-            ''', (user_id,))
-            credit_card_categories = cur.fetchall()
-            
-            categories_to_add = []
-            existing_names = [cat['name'] for cat in credit_card_categories]
-            if 'Credit Card' not in existing_names:
-                categories_to_add.append(('Credit Card', 'expense'))
-            if 'Credit Card Payment' not in existing_names:
-                categories_to_add.append(('Credit Card Payment', 'expense'))
-            
-            if categories_to_add:
-                print(f"📝 Adding credit card categories for user {session['username']}")
-                for category_name, category_type in categories_to_add:
-                    cur.execute('''
-                        INSERT INTO categories (user_id, name, type) 
-                        VALUES (%s, %s, %s)
-                    ''', (user_id, category_name, category_type))
-                conn.commit()
-                print(f"✅ Added {len(categories_to_add)} credit card categories")
-                
-                # Fetch categories again to include the new ones
-                cur.execute('''
-                    SELECT * FROM categories 
-                    WHERE user_id = %s 
-                    ORDER BY type, name
-                ''', (user_id,))
-                categories = cur.fetchall()
+        # Note: Removed auto-creation of Credit Card categories to allow proper deletion
         
         cur.close()
         conn.close()
