@@ -824,7 +824,11 @@ def categories():
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Get categories
         cur.execute('''
@@ -858,11 +862,15 @@ def add_category():
             return render_template('add_category.html')
         
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             # Get user ID
             cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-            user_id = cur.fetchone()[0]
+            user_result = cur.fetchone()
+            if not user_result:
+                flash('User not found', 'error')
+                return redirect(url_for('logout'))
+            user_id = user_result['id']
             
             # Insert category
             cur.execute('''
@@ -896,11 +904,15 @@ def delete_category(category_id):
         return redirect(url_for('categories'))
     
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Delete category
         cur.execute('''
