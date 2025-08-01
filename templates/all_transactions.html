@@ -360,16 +360,16 @@
                 {% for t in transactions %}
                 <div class="transaction-item">
                     <div class="transaction-info">
-                        <div class="transaction-date">{{ t[1] }}</div>
-                        <div class="transaction-category">{{ t[3] }}</div>
-                        {% if t[4] %}
-                        <div class="transaction-description">{{ t[4] }}</div>
+                        <div class="transaction-date">{{ t.date }}</div>
+                        <div class="transaction-category">{{ t.category }}</div>
+                        {% if t.description %}
+                        <div class="transaction-description">{{ t.description }}</div>
                         {% endif %}
                     </div>
-                    <div class="transaction-amount {{ t[5] }}">
-                        ₹{{ "%.2f"|format(t[2]) }}
+                    <div class="transaction-amount {{ t.type }}">
+                        ₹{{ "%.2f"|format(t.amount) }}
                     </div>
-                    <form method="POST" action="{{ url_for('delete_transaction', transaction_id=t[0]) }}" style="display: inline;">
+                    <form method="POST" action="{{ url_for('delete_transaction', transaction_id=t.id) }}" style="display: inline;">
                         <button type="submit" class="delete-btn" onclick="return confirm('Delete this transaction?')">Delete</button>
                     </form>
                 </div>
