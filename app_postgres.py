@@ -937,7 +937,11 @@ def all_transactions():
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Get filter parameters
         month_filter = request.args.get('month', '')
