@@ -12,6 +12,13 @@ app = Flask(__name__, static_folder='static')
 # Configuration
 app.config.from_object(Config)
 
+# Add custom headers to suppress warnings
+@app.after_request
+def add_security_headers(response):
+    """Add security headers and suppress deprecated warnings"""
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    return response
+
 # Database connection function
 def get_db_connection():
     """Get PostgreSQL database connection"""
