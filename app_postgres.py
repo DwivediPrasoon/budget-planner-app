@@ -959,12 +959,10 @@ def delete_template(template_id):
 @login_required
 def categories():
     """Categories management page"""
-    print(f"🔍 Categories route called for user: {session.get('username', 'NO_USER')}")
     conn = get_db_connection()
     if not conn:
-        print("❌ Database connection failed in categories route")
         flash('Database connection error', 'error')
-        return render_template('categories.html', categories=[])
+        return render_template('categories.html')
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -1023,15 +1021,16 @@ def categories():
         else:
             # Check if Credit Card categories exist, add if not
             cur.execute('''
-                SELECT id FROM categories 
+                SELECT name FROM categories 
                 WHERE user_id = %s AND name IN ('Credit Card', 'Credit Card Payment')
             ''', (user_id,))
             credit_card_categories = cur.fetchall()
             
             categories_to_add = []
-            if not any(cat['name'] == 'Credit Card' for cat in credit_card_categories):
+            existing_names = [cat['name'] for cat in credit_card_categories]
+            if 'Credit Card' not in existing_names:
                 categories_to_add.append(('Credit Card', 'expense'))
-            if not any(cat['name'] == 'Credit Card Payment' for cat in credit_card_categories):
+            if 'Credit Card Payment' not in existing_names:
                 categories_to_add.append(('Credit Card Payment', 'expense'))
             
             if categories_to_add:
