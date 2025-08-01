@@ -414,6 +414,562 @@ def get_categories():
         print(f"Get categories error: {e}")
         return jsonify([])
 
+@app.route('/delete/<int:transaction_id>', methods=['POST'])
+@login_required
+def delete_transaction(transaction_id):
+    """Delete a transaction"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Delete transaction
+        cur.execute('''
+            DELETE FROM transactions 
+            WHERE id = %s AND user_id = %s
+        ''', (transaction_id, user_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        flash('Transaction deleted successfully!', 'success')
+        return redirect(url_for('index'))
+        
+    except Exception as e:
+        print(f"Delete transaction error: {e}")
+        flash('Error deleting transaction', 'error')
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return redirect(url_for('index'))
+
+@app.route('/expected_expenses')
+@login_required
+def expected_expenses():
+    """Expected expenses page"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return render_template('expected_expenses.html')
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Get current month
+        current_month = datetime.now().strftime('%Y-%m')
+        
+        # Get expected expenses for current month
+        cur.execute('''
+            SELECT * FROM expected_expenses 
+            WHERE user_id = %s AND month_year = %s AND is_template = FALSE
+            ORDER BY category
+        ''', (user_id, current_month))
+        expected_expenses = cur.fetchall()
+        
+        # Get templates
+        cur.execute('''
+            SELECT * FROM budget_templates 
+            WHERE user_id = %s 
+            ORDER BY name
+        ''', (user_id,))
+        templates = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        return render_template('expected_expenses.html',
+                           expected_expenses=expected_expenses,
+                           templates=templates,
+                           current_month=current_month)
+                           
+    except Exception as e:
+        print(f"Expected expenses error: {e}")
+        flash('Error loading expected expenses', 'error')
+        return render_template('expected_expenses.html')
+
+@app.route('/add_expected_expense', methods=['GET', 'POST'])
+@login_required
+def add_expected_expense():
+    """Add expected expense page"""
+    if request.method == 'POST':
+        category = request.form['category']
+        amount = float(request.form['amount'])
+        month_year = request.form['month_year']
+        
+        conn = get_db_connection()
+        if not conn:
+            flash('Database connection error', 'error')
+            return render_template('add_expected_expense.html')
+        
+        try:
+            cur = conn.cursor()
+            
+            # Get user ID
+            cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+            user_id = cur.fetchone()[0]
+            
+            # Insert expected expense
+            cur.execute('''
+                INSERT INTO expected_expenses (user_id, category, amount, month_year)
+                VALUES (%s, %s, %s, %s)
+            ''', (user_id, category, amount, month_year))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            flash('Expected expense added successfully!', 'success')
+            return redirect(url_for('expected_expenses'))
+            
+        except Exception as e:
+            print(f"Add expected expense error: {e}")
+            flash('Error adding expected expense', 'error')
+            conn.rollback()
+            cur.close()
+            conn.close()
+    
+    return render_template('add_expected_expense.html')
+
+@app.route('/delete_expected_expense/<int:expense_id>', methods=['POST'])
+@login_required
+def delete_expected_expense(expense_id):
+    """Delete an expected expense"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('expected_expenses'))
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Delete expected expense
+        cur.execute('''
+            DELETE FROM expected_expenses 
+            WHERE id = %s AND user_id = %s
+        ''', (expense_id, user_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        flash('Expected expense deleted successfully!', 'success')
+        return redirect(url_for('expected_expenses'))
+        
+    except Exception as e:
+        print(f"Delete expected expense error: {e}")
+        flash('Error deleting expected expense', 'error')
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return redirect(url_for('expected_expenses'))
+
+@app.route('/apply_template/<int:template_id>', methods=['POST'])
+@login_required
+def apply_template(template_id):
+    """Apply a budget template to current month"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('expected_expenses'))
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Get template name
+        cur.execute('SELECT name FROM budget_templates WHERE id = %s AND user_id = %s', (template_id, user_id))
+        template = cur.fetchone()
+        if not template:
+            flash('Template not found', 'error')
+            return redirect(url_for('expected_expenses'))
+        
+        template_name = template[0]
+        
+        # Get template expenses
+        cur.execute('''
+            SELECT category, amount FROM expected_expenses 
+            WHERE user_id = %s AND template_name = %s
+        ''', (user_id, template_name))
+        template_expenses = cur.fetchall()
+        
+        # Get current month
+        current_month = datetime.now().strftime('%Y-%m')
+        
+        # Insert template expenses for current month
+        for category, amount in template_expenses:
+            cur.execute('''
+                INSERT INTO expected_expenses (user_id, category, amount, month_year, is_template)
+                VALUES (%s, %s, %s, %s, FALSE)
+            ''', (user_id, category, amount, current_month))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        flash('Template applied successfully!', 'success')
+        return redirect(url_for('expected_expenses'))
+        
+    except Exception as e:
+        print(f"Apply template error: {e}")
+        flash('Error applying template', 'error')
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return redirect(url_for('expected_expenses'))
+
+@app.route('/templates')
+@login_required
+def templates():
+    """Budget templates page"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return render_template('templates.html')
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Get templates
+        cur.execute('''
+            SELECT * FROM budget_templates 
+            WHERE user_id = %s 
+            ORDER BY name
+        ''', (user_id,))
+        templates = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        return render_template('templates.html', templates=templates)
+        
+    except Exception as e:
+        print(f"Templates error: {e}")
+        flash('Error loading templates', 'error')
+        return render_template('templates.html')
+
+@app.route('/add_template', methods=['GET', 'POST'])
+@login_required
+def add_template():
+    """Add budget template page"""
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        
+        conn = get_db_connection()
+        if not conn:
+            flash('Database connection error', 'error')
+            return render_template('add_template.html')
+        
+        try:
+            cur = conn.cursor()
+            
+            # Get user ID
+            cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+            user_id = cur.fetchone()[0]
+            
+            # Get current month's expected expenses
+            current_month = datetime.now().strftime('%Y-%m')
+            cur.execute('''
+                SELECT category, amount FROM expected_expenses 
+                WHERE user_id = %s AND month_year = %s AND is_template = FALSE
+            ''', (user_id, current_month))
+            current_expenses = cur.fetchall()
+            
+            if not current_expenses:
+                flash('No expected expenses found for current month', 'error')
+                return render_template('add_template.html')
+            
+            # Create template
+            cur.execute('''
+                INSERT INTO budget_templates (user_id, name, description)
+                VALUES (%s, %s, %s) RETURNING id
+            ''', (user_id, name, description))
+            
+            # Insert template expenses
+            for category, amount in current_expenses:
+                cur.execute('''
+                    INSERT INTO expected_expenses (user_id, category, amount, month_year, is_template, template_name)
+                    VALUES (%s, %s, %s, %s, TRUE, %s)
+                ''', (user_id, category, amount, current_month, name))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            flash('Template created successfully!', 'success')
+            return redirect(url_for('templates'))
+            
+        except Exception as e:
+            print(f"Add template error: {e}")
+            flash('Error creating template', 'error')
+            conn.rollback()
+            cur.close()
+            conn.close()
+    
+    return render_template('add_template.html')
+
+@app.route('/delete_template/<int:template_id>', methods=['POST'])
+@login_required
+def delete_template(template_id):
+    """Delete a budget template"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('templates'))
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Get template name
+        cur.execute('SELECT name FROM budget_templates WHERE id = %s AND user_id = %s', (template_id, user_id))
+        template = cur.fetchone()
+        if not template:
+            flash('Template not found', 'error')
+            return redirect(url_for('templates'))
+        
+        template_name = template[0]
+        
+        # Delete template expenses
+        cur.execute('''
+            DELETE FROM expected_expenses 
+            WHERE user_id = %s AND template_name = %s
+        ''', (user_id, template_name))
+        
+        # Delete template
+        cur.execute('''
+            DELETE FROM budget_templates 
+            WHERE id = %s AND user_id = %s
+        ''', (template_id, user_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        flash('Template deleted successfully!', 'success')
+        return redirect(url_for('templates'))
+        
+    except Exception as e:
+        print(f"Delete template error: {e}")
+        flash('Error deleting template', 'error')
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return redirect(url_for('templates'))
+
+@app.route('/categories')
+@login_required
+def categories():
+    """Categories management page"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return render_template('categories.html')
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Get categories
+        cur.execute('''
+            SELECT * FROM categories 
+            WHERE user_id = %s 
+            ORDER BY type, name
+        ''', (user_id,))
+        categories = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        return render_template('categories.html', categories=categories)
+        
+    except Exception as e:
+        print(f"Categories error: {e}")
+        flash('Error loading categories', 'error')
+        return render_template('categories.html')
+
+@app.route('/add_category', methods=['GET', 'POST'])
+@login_required
+def add_category():
+    """Add category page"""
+    if request.method == 'POST':
+        name = request.form['name']
+        category_type = request.form['type']
+        
+        conn = get_db_connection()
+        if not conn:
+            flash('Database connection error', 'error')
+            return render_template('add_category.html')
+        
+        try:
+            cur = conn.cursor()
+            
+            # Get user ID
+            cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+            user_id = cur.fetchone()[0]
+            
+            # Insert category
+            cur.execute('''
+                INSERT INTO categories (user_id, name, type)
+                VALUES (%s, %s, %s)
+            ''', (user_id, name, category_type))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            flash('Category added successfully!', 'success')
+            return redirect(url_for('categories'))
+            
+        except Exception as e:
+            print(f"Add category error: {e}")
+            flash('Error adding category', 'error')
+            conn.rollback()
+            cur.close()
+            conn.close()
+    
+    return render_template('add_category.html')
+
+@app.route('/delete_category/<int:category_id>', methods=['POST'])
+@login_required
+def delete_category(category_id):
+    """Delete a category"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('categories'))
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Delete category
+        cur.execute('''
+            DELETE FROM categories 
+            WHERE id = %s AND user_id = %s
+        ''', (category_id, user_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        flash('Category deleted successfully!', 'success')
+        return redirect(url_for('categories'))
+        
+    except Exception as e:
+        print(f"Delete category error: {e}")
+        flash('Error deleting category', 'error')
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return redirect(url_for('categories'))
+
+@app.route('/transactions')
+@login_required
+def all_transactions():
+    """All transactions page with filters"""
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return render_template('all_transactions.html')
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_id = cur.fetchone()[0]
+        
+        # Get filter parameters
+        month_filter = request.args.get('month', '')
+        week_filter = request.args.get('week', '')
+        category_filter = request.args.get('category', '')
+        type_filter = request.args.get('type', '')
+        
+        # Build query
+        query = '''
+            SELECT * FROM transactions 
+            WHERE user_id = %s
+        '''
+        params = [user_id]
+        
+        if month_filter:
+            query += ' AND DATE_TRUNC(\'month\', date) = DATE_TRUNC(\'month\', %s::date)'
+            params.append(month_filter + '-01')
+        
+        if week_filter:
+            query += ' AND DATE_TRUNC(\'week\', date) = DATE_TRUNC(\'week\', %s::date)'
+            params.append(week_filter)
+        
+        if category_filter:
+            query += ' AND category = %s'
+            params.append(category_filter)
+        
+        if type_filter:
+            query += ' AND type = %s'
+            params.append(type_filter)
+        
+        query += ' ORDER BY date DESC, id DESC'
+        
+        cur.execute(query, params)
+        transactions = cur.fetchall()
+        
+        # Get categories for filter
+        cur.execute('''
+            SELECT DISTINCT name FROM categories 
+            WHERE user_id = %s 
+            ORDER BY name
+        ''', (user_id,))
+        categories = [row['name'] for row in cur.fetchall()]
+        
+        cur.close()
+        conn.close()
+        
+        return render_template('all_transactions.html',
+                           transactions=transactions,
+                           categories=categories,
+                           month_filter=month_filter,
+                           week_filter=week_filter,
+                           category_filter=category_filter,
+                           type_filter=type_filter)
+                           
+    except Exception as e:
+        print(f"All transactions error: {e}")
+        flash('Error loading transactions', 'error')
+        return render_template('all_transactions.html')
+
 @app.route('/api/chart-data')
 @login_required
 def chart_data():
