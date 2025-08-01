@@ -760,23 +760,7 @@
             </div>
         </div>
         
-        {% if credit_card_spending > 0 %}
-        <div class="credit-card-section">
-            <div class="section-header">
-                <h3>💳 Credit Card Spending</h3>
-                <a href="{{ url_for('add_expected_expense') }}" class="budget-link">Plan Next Month Payment</a>
-            </div>
-            <div class="credit-card-summary">
-                <div class="credit-card-info">
-                    <div class="credit-card-amount">₹{{ "%.2f"|format(credit_card_spending) }}</div>
-                    <div class="credit-card-label">This Month's Credit Card Spending</div>
-                </div>
-                <div class="credit-card-actions">
-                    <a href="{{ url_for('add_expected_expense') }}" class="setup-btn">+ Add as Expected Expense for Next Month</a>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+
         
         {% if expected_vs_actual %}
         <div class="budget-section">

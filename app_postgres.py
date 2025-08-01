@@ -149,8 +149,7 @@ def index():
                            spendable_money=0,
                            balance=0,
                            total_expected=0,
-                           expected_vs_actual=[],
-                           credit_card_spending=0)
+                           expected_vs_actual=[])
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -217,17 +216,7 @@ def index():
         ''', (user_id, current_month))
         expected_vs_actual = cur.fetchall()
         
-        # Get credit card spending for current month
-        cur.execute('''
-            SELECT COALESCE(SUM(amount), 0) as credit_card_total
-            FROM transactions 
-            WHERE user_id = %s 
-                AND category = 'Credit Card' 
-                AND type = 'expense'
-                AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
-        ''', (user_id,))
-        credit_card_result = cur.fetchone()
-        credit_card_spending = float(credit_card_result['credit_card_total'] or 0)
+
         
         # Calculate spendable money
         spendable_money = total_income - total_expenses - total_expected
@@ -271,8 +260,7 @@ def index():
                            spendable_money=spendable_money,
                            balance=balance,
                            total_expected=total_expected,
-                           expected_vs_actual=expected_vs_actual,
-                           credit_card_spending=credit_card_spending)
+                           expected_vs_actual=expected_vs_actual)
                            
     except Exception as e:
         print(f"Error in index route: {e}")
@@ -286,8 +274,7 @@ def index():
                            spendable_money=0,
                            balance=0,
                            total_expected=0,
-                           expected_vs_actual=[],
-                           credit_card_spending=0)
+                           expected_vs_actual=[])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -416,17 +403,52 @@ def add_transaction():
             return render_template('add_transaction.html')
         
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             # Get user ID
             cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-            user_id = cur.fetchone()[0]
+            user_result = cur.fetchone()
+            if not user_result:
+                flash('User not found', 'error')
+                return redirect(url_for('logout'))
+            user_id = user_result['id']
             
             # Insert transaction
             cur.execute('''
                 INSERT INTO transactions (user_id, date, amount, category, description, type)
                 VALUES (%s, %s, %s, %s, %s, %s)
             ''', (user_id, date, amount, category, description, transaction_type))
+            
+            # If this is a credit card transaction, automatically create expected expense for next month
+            if category == 'Credit Card' and transaction_type == 'expense':
+                # Calculate next month
+                from datetime import datetime, timedelta
+                current_date = datetime.strptime(date, '%Y-%m-%d')
+                next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+                next_month_str = next_month.strftime('%Y-%m')
+                
+                # Check if expected expense already exists for next month
+                cur.execute('''
+                    SELECT id FROM expected_expenses 
+                    WHERE user_id = %s AND month_year = %s AND category = 'Credit Card Payment'
+                ''', (user_id, next_month_str))
+                existing_expense = cur.fetchone()
+                
+                if existing_expense:
+                    # Update existing expected expense
+                    cur.execute('''
+                        UPDATE expected_expenses 
+                        SET amount = amount + %s 
+                        WHERE user_id = %s AND month_year = %s AND category = 'Credit Card Payment'
+                    ''', (amount, user_id, next_month_str))
+                    print(f"💰 Updated existing credit card payment expected expense for {next_month_str}: +₹{amount}")
+                else:
+                    # Create new expected expense for next month
+                    cur.execute('''
+                        INSERT INTO expected_expenses (user_id, category, amount, month_year, is_template)
+                        VALUES (%s, %s, %s, %s, FALSE)
+                    ''', (user_id, 'Credit Card Payment', amount, next_month_str))
+                    print(f"💰 Created new credit card payment expected expense for {next_month_str}: ₹{amount}")
             
             conn.commit()
             cur.close()
@@ -963,7 +985,8 @@ def categories():
                 ('Bills', 'expense'),
                 ('Entertainment', 'expense'),
                 ('Healthcare', 'expense'),
-                ('Credit Card', 'expense')
+                ('Credit Card', 'expense'),
+                ('Credit Card Payment', 'expense')
             ]
             
             for category_name, category_type in default_categories:
@@ -983,23 +1006,30 @@ def categories():
             ''', (user_id,))
             categories = cur.fetchall()
         else:
-            # Check if Credit Card category exists, add if not
+            # Check if Credit Card categories exist, add if not
             cur.execute('''
                 SELECT id FROM categories 
-                WHERE user_id = %s AND name = 'Credit Card'
+                WHERE user_id = %s AND name IN ('Credit Card', 'Credit Card Payment')
             ''', (user_id,))
-            credit_card_exists = cur.fetchone()
+            credit_card_categories = cur.fetchall()
             
-            if not credit_card_exists:
-                print(f"📝 Adding Credit Card category for user {session['username']}")
-                cur.execute('''
-                    INSERT INTO categories (user_id, name, type) 
-                    VALUES (%s, %s, %s)
-                ''', (user_id, 'Credit Card', 'expense'))
+            categories_to_add = []
+            if not any(cat['name'] == 'Credit Card' for cat in credit_card_categories):
+                categories_to_add.append(('Credit Card', 'expense'))
+            if not any(cat['name'] == 'Credit Card Payment' for cat in credit_card_categories):
+                categories_to_add.append(('Credit Card Payment', 'expense'))
+            
+            if categories_to_add:
+                print(f"📝 Adding credit card categories for user {session['username']}")
+                for category_name, category_type in categories_to_add:
+                    cur.execute('''
+                        INSERT INTO categories (user_id, name, type) 
+                        VALUES (%s, %s, %s)
+                    ''', (user_id, category_name, category_type))
                 conn.commit()
-                print("✅ Added Credit Card category")
+                print(f"✅ Added {len(categories_to_add)} credit card categories")
                 
-                # Fetch categories again to include the new one
+                # Fetch categories again to include the new ones
                 cur.execute('''
                     SELECT * FROM categories 
                     WHERE user_id = %s 
