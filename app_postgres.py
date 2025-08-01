@@ -133,7 +133,14 @@ def index():
     conn = get_db_connection()
     if not conn:
         flash('Database connection error', 'error')
-        return render_template('index.html')
+        return render_template('index.html',
+                           recent_transactions=[],
+                           total_income=0,
+                           total_expenses=0,
+                           monthly_data=[],
+                           category_data=[],
+                           spendable_money=0,
+                           total_expected=0)
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -223,7 +230,14 @@ def index():
     except Exception as e:
         print(f"Error in index route: {e}")
         flash('Error loading dashboard', 'error')
-        return render_template('index.html')
+        return render_template('index.html',
+                           recent_transactions=[],
+                           total_income=0,
+                           total_expenses=0,
+                           monthly_data=[],
+                           category_data=[],
+                           spendable_money=0,
+                           total_expected=0)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
