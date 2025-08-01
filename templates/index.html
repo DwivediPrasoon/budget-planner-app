@@ -848,9 +848,15 @@
         };
 
         // Load chart data
+        console.log('Loading chart data...');
         fetch('/api/chart-data')
-            .then(response => response.json())
+            .then(response => {
+                console.log('Chart data response:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('Chart data received:', data);
+                
                 // Enhanced Monthly Income vs Expenses Chart
                 const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
                 new Chart(monthlyCtx, {
