@@ -983,7 +983,13 @@ def all_transactions():
                            month_filter=month_filter,
                            week_filter=week_filter,
                            category_filter=category_filter,
-                           type_filter=type_filter)
+                           type_filter=type_filter,
+                           current_filters={
+                               'month': month_filter,
+                               'week': week_filter,
+                               'category': category_filter,
+                               'type': type_filter
+                           })
                            
     except Exception as e:
         print(f"All transactions error: {e}")
