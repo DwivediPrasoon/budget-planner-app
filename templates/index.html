@@ -732,13 +732,13 @@
             </div>
             <div class="budget-cards">
                 {% for expected in expected_vs_actual %}
-                {% set spent = expected[2] %}
-                {% set limit = expected[1] %}
+                {% set spent = expected.actual_spent %}
+                {% set limit = expected.expected_amount %}
                 {% set percentage = (spent / limit * 100) if limit > 0 else 0 %}
                 {% set status = 'over' if percentage > 100 else 'good' if percentage < 80 else 'warning' %}
                 <div class="budget-card">
                     <div class="budget-header">
-                        <span class="budget-category">{{ expected[0] }}</span>
+                        <span class="budget-category">{{ expected.category }}</span>
                         <span class="budget-amount">₹{{ "%.2f"|format(spent) }} / ₹{{ "%.2f"|format(limit) }}</span>
                     </div>
                     <div class="progress-bar">

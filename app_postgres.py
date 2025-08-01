@@ -148,7 +148,8 @@ def index():
                            category_data=[],
                            spendable_money=0,
                            balance=0,
-                           total_expected=0)
+                           total_expected=0,
+                           expected_vs_actual=[])
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -196,6 +197,25 @@ def index():
         expected_result = cur.fetchone()
         total_expected = float(expected_result['total_expected'] or 0)
         
+        # Get expected expenses vs actual spending for tracking
+        cur.execute('''
+            SELECT 
+                ee.category,
+                ee.amount as expected_amount,
+                COALESCE(SUM(t.amount), 0) as actual_spent
+            FROM expected_expenses ee
+            LEFT JOIN transactions t ON t.user_id = ee.user_id 
+                AND t.category = ee.category 
+                AND t.type = 'expense'
+                AND DATE_TRUNC('month', t.date) = DATE_TRUNC('month', CURRENT_DATE)
+            WHERE ee.user_id = %s 
+                AND ee.month_year = %s 
+                AND ee.is_template = FALSE
+            GROUP BY ee.category, ee.amount
+            ORDER BY ee.category
+        ''', (user_id, current_month))
+        expected_vs_actual = cur.fetchall()
+        
         # Calculate spendable money
         spendable_money = total_income - total_expenses - total_expected
         
@@ -237,7 +257,8 @@ def index():
                            category_data=category_data,
                            spendable_money=spendable_money,
                            balance=balance,
-                           total_expected=total_expected)
+                           total_expected=total_expected,
+                           expected_vs_actual=expected_vs_actual)
                            
     except Exception as e:
         print(f"Error in index route: {e}")
@@ -250,7 +271,8 @@ def index():
                            category_data=[],
                            spendable_money=0,
                            balance=0,
-                           total_expected=0)
+                           total_expected=0,
+                           expected_vs_actual=[])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
