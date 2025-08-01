@@ -1278,13 +1278,12 @@ def all_transactions():
         flash('Error loading transactions', 'error')
         return render_template('all_transactions.html')
 
-@app.route('/api/chart-data')
+@app.route('/api/analytics')
 @login_required
-def chart_data():
-    """API endpoint for chart data"""
+def analytics_data():
+    """API endpoint for minimal analytics data"""
     conn = get_db_connection()
     if not conn:
-        print("❌ Database connection failed in chart_data")
         return jsonify({})
     
     try:
@@ -1294,52 +1293,72 @@ def chart_data():
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
         user_result = cur.fetchone()
         if not user_result:
-            print(f"❌ User not found: {session['username']}")
             return jsonify({})
         
         user_id = user_result['id']
-        print(f"✅ User ID: {user_id}")
         
-        # Monthly data for line chart
+        # Current month spending
         cur.execute('''
             SELECT 
-                TO_CHAR(date, 'YYYY-MM') as month,
-                SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
-                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
+                SUM(CASE WHEN type = 'expense' AND payment_method != 'credit_card' THEN amount ELSE 0 END) as current_spending,
+                COUNT(CASE WHEN type = 'expense' AND payment_method != 'credit_card' THEN 1 END) as transaction_count
             FROM transactions 
-            WHERE user_id = %s AND date >= CURRENT_DATE - INTERVAL '6 months'
-            GROUP BY TO_CHAR(date, 'YYYY-MM')
-            ORDER BY month
+            WHERE user_id = %s 
+            AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
         ''', (user_id,))
-        monthly_data = cur.fetchall()
-        print(f"📊 Monthly data rows: {len(monthly_data)}")
+        current_month = cur.fetchone()
         
-        # Category data for doughnut chart
+        # Previous month spending
+        cur.execute('''
+            SELECT 
+                SUM(CASE WHEN type = 'expense' AND payment_method != 'credit_card' THEN amount ELSE 0 END) as previous_spending
+            FROM transactions 
+            WHERE user_id = %s 
+            AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+        ''', (user_id,))
+        previous_month = cur.fetchone()
+        
+        # Calculate analytics
+        current_spending = float(current_month['current_spending'] or 0)
+        previous_spending = float(previous_month['previous_spending'] or 0)
+        transaction_count = int(current_month['transaction_count'] or 0)
+        
+        # Calculate average daily spending
+        days_in_month = datetime.now().day
+        avg_daily_spending = current_spending / days_in_month if days_in_month > 0 else 0
+        
+        # Calculate spending trend
+        spending_trend = 0
+        if previous_spending > 0:
+            spending_trend = ((current_spending - previous_spending) / previous_spending) * 100
+        
+        # Top spending categories
         cur.execute('''
             SELECT category, SUM(amount) as total
             FROM transactions 
-            WHERE user_id = %s AND type = 'expense' 
+            WHERE user_id = %s 
+            AND type = 'expense' 
+            AND payment_method != 'credit_card'
             AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
             GROUP BY category
             ORDER BY total DESC
+            LIMIT 3
         ''', (user_id,))
-        category_data = cur.fetchall()
-        print(f"📊 Category data rows: {len(category_data)}")
+        top_categories = cur.fetchall()
         
-        # Create response data
         response_data = {
-            'monthly': {
-                'labels': [row['month'] for row in monthly_data],
-                'income': [float(row['income'] or 0) for row in monthly_data],
-                'expenses': [float(row['expenses'] or 0) for row in monthly_data]
-            },
-            'categories': {
-                'labels': [row['category'] for row in category_data],
-                'data': [float(row['total'] or 0) for row in category_data]
-            }
+            'current_spending': current_spending,
+            'previous_spending': previous_spending,
+            'avg_daily_spending': avg_daily_spending,
+            'spending_trend': spending_trend,
+            'transaction_count': transaction_count,
+            'top_categories': [
+                {
+                    'category': row['category'],
+                    'amount': float(row['total'] or 0)
+                } for row in top_categories
+            ]
         }
-        
-        print(f"📊 Response data: {response_data}")
         
         cur.close()
         conn.close()
@@ -1347,7 +1366,7 @@ def chart_data():
         return jsonify(response_data)
         
     except Exception as e:
-        print(f"❌ Chart data error: {e}")
+        print(f"❌ Analytics error: {e}")
         return jsonify({})
 
 if __name__ == '__main__':

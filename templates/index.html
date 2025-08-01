@@ -229,67 +229,90 @@
             border: 1px solid #bee5eb;
         }
         
-        .charts-dropdown {
+        .analytics-section {
             margin-top: 30px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .analytics-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 25px;
         }
         
-        .charts-toggle {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: none;
+        .analytics-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 12px;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #dee2e6;
             transition: all 0.3s ease;
         }
         
-        .charts-toggle:hover {
+        .analytics-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         
-        .toggle-icon {
+        .analytics-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .analytics-icon {
             font-size: 1.2rem;
-            margin-right: 10px;
         }
         
-        .toggle-text {
-            flex: 1;
-            text-align: left;
-        }
-        
-        .toggle-arrow {
+        .analytics-title {
             font-size: 0.9rem;
-            transition: transform 0.3s ease;
+            color: #666;
+            font-weight: 500;
         }
         
-        .charts-toggle.active .toggle-arrow {
-            transform: rotate(180deg);
+        .analytics-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
         }
         
-        .charts-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-top: 0;
-            opacity: 0;
-            transform: translateY(-10px);
+        .analytics-subtitle {
+            font-size: 0.8rem;
+            color: #888;
         }
         
-        .charts-content.show {
-            max-height: 2000px;
-            margin-top: 15px;
-            opacity: 1;
-            transform: translateY(0);
+        .analytics-chart {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .analytics-chart h4 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .chart-container {
+            height: 200px;
+            position: relative;
         }
         
         .summary-cards {
@@ -892,86 +915,141 @@
             {% endif %}
         </div>
         
-        <div class="charts-dropdown">
-            <button class="charts-toggle" onclick="toggleCharts()">
-                <span class="toggle-icon">📊</span>
-                <span class="toggle-text">Show Analytics</span>
-                <span class="toggle-arrow">▼</span>
-            </button>
-            <div class="charts-content" id="chartsContent">
-                <div class="charts-section">
-                    <div class="chart-container">
-                        <h3>📈 Monthly Income vs Expenses</h3>
-                        <canvas id="monthlyChart"></canvas>
+        <div class="analytics-section">
+            <h3>📊 Quick Analytics</h3>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-header">
+                        <span class="analytics-icon">📅</span>
+                        <span class="analytics-title">Average Daily Spending</span>
                     </div>
-                    <div class="chart-container">
-                        <h3>🍕 Expense Categories</h3>
-                        <canvas id="categoryChart"></canvas>
-                    </div>
+                    <div class="analytics-value" id="avgDailySpending">₹0.00</div>
+                    <div class="analytics-subtitle">This month</div>
                 </div>
                 
-                <div class="charts-section">
-                    <div class="chart-container">
-                        <h3>💰 Budget vs Actual Spending</h3>
-                        <canvas id="budgetChart"></canvas>
+                <div class="analytics-card">
+                    <div class="analytics-header">
+                        <span class="analytics-icon">📈</span>
+                        <span class="analytics-title">Spending Trend</span>
                     </div>
-                    <div class="chart-container">
-                        <h3>📊 Weekly Spending Trend</h3>
-                        <canvas id="weeklyChart"></canvas>
-                    </div>
+                    <div class="analytics-value" id="spendingTrend">0%</div>
+                    <div class="analytics-subtitle">vs last month</div>
                 </div>
                 
-                <div class="charts-section">
-                    <div class="chart-container">
-                        <h3>🎯 Savings Rate</h3>
-                        <canvas id="savingsChart"></canvas>
+                <div class="analytics-card">
+                    <div class="analytics-header">
+                        <span class="analytics-icon">💳</span>
+                        <span class="analytics-title">Top Category</span>
                     </div>
-                    <div class="chart-container">
-                        <h3>📅 Category Spending Over Time</h3>
-                        <canvas id="categoryTrendChart"></canvas>
-                    </div>
+                    <div class="analytics-value" id="topCategory">-</div>
+                    <div class="analytics-subtitle" id="topCategoryAmount">₹0.00</div>
+                </div>
+            </div>
+            
+            <div class="analytics-chart">
+                <h4>📊 Spending Comparison</h4>
+                <div class="chart-container">
+                    <canvas id="spendingChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Enhanced chart configurations
-        const chartColors = {
-            primary: '#007bff',
-            success: '#28a745',
-            warning: '#ffc107',
-            danger: '#dc3545',
-            info: '#17a2b8',
-            purple: '#6f42c1',
-            orange: '#fd7e14',
-            teal: '#20c997',
-            pink: '#e83e8c'
-        };
-
-        // Load chart data
-        console.log('Loading chart data...');
-        fetch('/api/chart-data')
-            .then(response => {
-                console.log('Chart data response:', response);
-                return response.json();
-            })
+        // Load analytics data
+        fetch('/api/analytics')
+            .then(response => response.json())
             .then(data => {
-                console.log('Chart data received:', data);
+                // Update analytics cards
+                document.getElementById('avgDailySpending').textContent = 
+                    '₹' + data.avg_daily_spending.toFixed(2);
                 
-                // Check if data exists and has the expected structure
-                if (!data || !data.monthly || !data.categories) {
-                    console.error('Invalid chart data structure:', data);
-                    showEmptyCharts();
-                    return;
+                const trendElement = document.getElementById('spendingTrend');
+                const trend = data.spending_trend;
+                trendElement.textContent = trend.toFixed(1) + '%';
+                trendElement.style.color = trend > 0 ? '#dc3545' : '#28a745';
+                
+                if (data.top_categories.length > 0) {
+                    document.getElementById('topCategory').textContent = 
+                        data.top_categories[0].category;
+                    document.getElementById('topCategoryAmount').textContent = 
+                        '₹' + data.top_categories[0].amount.toFixed(2);
                 }
                 
-                // Check if there's any data to display
-                if (data.monthly.labels.length === 0 && data.categories.labels.length === 0) {
-                    console.log('No chart data available - showing empty state');
-                    showEmptyCharts();
-                    return;
-                }
+                // Create spending comparison chart
+                const ctx = document.getElementById('spendingChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Current Month', 'Previous Month'],
+                        datasets: [{
+                            label: 'Spending',
+                            data: [data.current_spending, data.previous_spending],
+                            backgroundColor: [
+                                'rgba(220, 53, 69, 0.8)',
+                                'rgba(108, 117, 125, 0.8)'
+                            ],
+                            borderColor: [
+                                '#dc3545',
+                                '#6c757d'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#007bff',
+                                borderWidth: 1,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        return '₹' + context.parsed.y.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value.toLocaleString();
+                                    },
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading analytics:', error);
+            });
                 
                 // Enhanced Monthly Income vs Expenses Chart
                 const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
