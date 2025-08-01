@@ -1,16 +1,12 @@
-# Database files
-*.db
-data/
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 
 # Virtual environment
 venv/
 env/
 ENV/
-
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
 
 # IDE files
 .vscode/
@@ -21,4 +17,9 @@ __pycache__/
 Thumbs.db
 
 # Logs
-*.log 
+*.log
+
+# Development files
+cookies.txt
+test_*.py
+deploy_*.py 

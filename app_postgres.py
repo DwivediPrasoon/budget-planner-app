@@ -5,12 +5,10 @@ from datetime import datetime, timedelta
 import os
 import hashlib
 import secrets
-from config import Config
-
 app = Flask(__name__, static_folder='static')
 
-# Configuration
-app.config.from_object(Config)
+# Configuration for Railway deployment
+app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 
 # Add custom headers to suppress warnings
 @app.after_request
