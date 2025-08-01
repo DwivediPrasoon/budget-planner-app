@@ -415,6 +415,7 @@ def get_categories():
     
     conn = get_db_connection()
     if not conn:
+        print("❌ Database connection failed in get_categories")
         return jsonify([])
     
     try:
@@ -422,7 +423,13 @@ def get_categories():
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            print(f"❌ User not found: {session['username']}")
+            return jsonify([])
+        
+        user_id = user_result['id']
+        print(f"✅ User ID: {user_id}, Category type: {category_type}")
         
         # Get categories by type
         cur.execute('''
@@ -432,13 +439,15 @@ def get_categories():
         ''', (user_id, category_type))
         
         categories = [row['name'] for row in cur.fetchall()]
+        print(f"📊 Found {len(categories)} categories of type '{category_type}' for user {session['username']}")
+        
         cur.close()
         conn.close()
         
         return jsonify(categories)
         
     except Exception as e:
-        print(f"Get categories error: {e}")
+        print(f"❌ Get categories error: {e}")
         return jsonify([])
 
 @app.route('/delete/<int:transaction_id>', methods=['POST'])
@@ -837,6 +846,40 @@ def categories():
             ORDER BY type, name
         ''', (user_id,))
         categories = cur.fetchall()
+        
+        print(f"📊 Found {len(categories)} categories for user {session['username']}")
+        
+        # If no categories exist, add default categories
+        if not categories:
+            print(f"📝 Adding default categories for user {session['username']}")
+            default_categories = [
+                ('Salary', 'income'),
+                ('Freelance', 'income'),
+                ('Investment', 'income'),
+                ('Food', 'expense'),
+                ('Transport', 'expense'),
+                ('Shopping', 'expense'),
+                ('Bills', 'expense'),
+                ('Entertainment', 'expense'),
+                ('Healthcare', 'expense')
+            ]
+            
+            for category_name, category_type in default_categories:
+                cur.execute('''
+                    INSERT INTO categories (user_id, name, type) 
+                    VALUES (%s, %s, %s)
+                ''', (user_id, category_name, category_type))
+            
+            conn.commit()
+            print(f"✅ Added {len(default_categories)} default categories")
+            
+            # Fetch categories again
+            cur.execute('''
+                SELECT * FROM categories 
+                WHERE user_id = %s 
+                ORDER BY type, name
+            ''', (user_id,))
+            categories = cur.fetchall()
         
         cur.close()
         conn.close()
