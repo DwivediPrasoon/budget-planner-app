@@ -118,6 +118,18 @@ def init_db():
             ''')
             conn.commit()
             print("✅ Payment method column added to transactions table")
+            
+            # Migrate old "Credit Card" category transactions to use payment_method
+            cur.execute('''
+                UPDATE transactions 
+                SET payment_method = 'credit_card' 
+                WHERE category = 'Credit Card' AND payment_method = 'cash'
+            ''')
+            migrated_count = cur.rowcount
+            if migrated_count > 0:
+                conn.commit()
+                print(f"✅ Migrated {migrated_count} old 'Credit Card' transactions to use payment_method")
+            
         except Exception as e:
             print(f"⚠️ Payment method column already exists or error: {e}")
         
@@ -229,12 +241,12 @@ def index():
         ''', (user_id, current_month))
         expected_vs_actual = cur.fetchall()
         
-        # Get credit card spending for current month
+        # Get credit card spending for current month (using payment method)
         cur.execute('''
             SELECT COALESCE(SUM(amount), 0) as credit_card_total
             FROM transactions 
             WHERE user_id = %s 
-                AND category = 'Credit Card' 
+                AND payment_method = 'credit_card' 
                 AND type = 'expense'
                 AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
         ''', (user_id,))
