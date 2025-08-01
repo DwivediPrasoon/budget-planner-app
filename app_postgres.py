@@ -959,10 +959,12 @@ def delete_template(template_id):
 @login_required
 def categories():
     """Categories management page"""
+    print(f"🔍 Categories route called for user: {session.get('username', 'NO_USER')}")
     conn = get_db_connection()
     if not conn:
+        print("❌ Database connection failed in categories route")
         flash('Database connection error', 'error')
-        return render_template('categories.html')
+        return render_template('categories.html', categories=[])
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -984,8 +986,6 @@ def categories():
         categories = cur.fetchall()
         
         print(f"📊 Found {len(categories)} categories for user {session['username']}")
-        print(f"🔍 User ID: {user_id}")
-        print(f"🔍 Categories: {categories}")
         
         # If no categories exist, add default categories
         if not categories:
@@ -1020,8 +1020,6 @@ def categories():
                 ORDER BY type, name
             ''', (user_id,))
             categories = cur.fetchall()
-            print(f"📊 After adding defaults: Found {len(categories)} categories")
-            print(f"🔍 Updated categories: {categories}")
         else:
             # Check if Credit Card categories exist, add if not
             cur.execute('''
@@ -1053,8 +1051,6 @@ def categories():
                     ORDER BY type, name
                 ''', (user_id,))
                 categories = cur.fetchall()
-                print(f"📊 After adding credit card categories: Found {len(categories)} categories")
-                print(f"🔍 Final categories: {categories}")
         
         cur.close()
         conn.close()
