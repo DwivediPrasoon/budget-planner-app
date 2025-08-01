@@ -250,10 +250,13 @@
                     </div>
                 {% endif %}
             {% endwith %}
+            <!-- DEBUG: Categories count: {{ categories|length }} -->
             {% if categories %}
+                <!-- DEBUG: Categories exist -->
                 {% set has_expense = false %}
                 {% set has_income = false %}
                 {% for category in categories %}
+                    <!-- DEBUG: Category {{ category.name }} ({{ category.type }}) -->
                     {% if category.type == 'expense' %}
                         {% set has_expense = true %}
                     {% elif category.type == 'income' %}
