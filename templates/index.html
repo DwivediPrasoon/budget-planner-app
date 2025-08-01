@@ -857,21 +857,27 @@
             .then(data => {
                 console.log('Chart data received:', data);
                 
+                // Check if data exists and has the expected structure
+                if (!data || !data.monthly || !data.categories) {
+                    console.error('Invalid chart data structure:', data);
+                    return;
+                }
+                
                 // Enhanced Monthly Income vs Expenses Chart
                 const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
                 new Chart(monthlyCtx, {
                     type: 'line',
                     data: {
-                        labels: data.monthly.map(item => {
-                            const [year, month] = item.month.split('-');
-                            return new Date(year, month - 1).toLocaleDateString('en-US', { 
+                        labels: data.monthly.labels.map(month => {
+                            const [year, monthNum] = month.split('-');
+                            return new Date(year, monthNum - 1).toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 year: 'numeric' 
                             });
                         }),
                         datasets: [{
                             label: '💰 Income',
-                            data: data.monthly.map(item => item.income),
+                            data: data.monthly.income,
                             borderColor: chartColors.success,
                             backgroundColor: 'rgba(40, 167, 69, 0.1)',
                             borderWidth: 3,
@@ -883,7 +889,7 @@
                             pointRadius: 6
                         }, {
                             label: '💸 Expenses',
-                            data: data.monthly.map(item => item.expenses),
+                            data: data.monthly.expenses,
                             borderColor: chartColors.danger,
                             backgroundColor: 'rgba(220, 53, 69, 0.1)',
                             borderWidth: 3,
@@ -958,10 +964,10 @@
                 const categoryCtx = document.getElementById('categoryChart').getContext('2d');
                 new Chart(categoryCtx, {
                     type: 'doughnut',
-                    data: {
-                        labels: data.categories.map(item => item.category),
-                        datasets: [{
-                            data: data.categories.map(item => item.total),
+                                            data: {
+                            labels: data.categories.labels,
+                            datasets: [{
+                                data: data.categories.data,
                             backgroundColor: [
                                 chartColors.primary, chartColors.success, chartColors.warning, 
                                 chartColors.danger, chartColors.purple, chartColors.orange, 
