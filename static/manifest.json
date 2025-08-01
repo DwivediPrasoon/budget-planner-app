@@ -1,7 +1,7 @@
 {
-  "name": "Budget Planner",
-  "short_name": "Budget",
-  "description": "A simple budget planning app for tracking expenses",
+  "name": "BudgetWatch",
+  "short_name": "BudgetWatch",
+  "description": "Smart Budget Monitoring Application",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8f9fa",

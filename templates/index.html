@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Budget Planner">
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link rel="manifest" href="/static/manifest.json">
     
     <!-- Chart.js for graphs -->
@@ -132,6 +132,14 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+        
+        .logo {
+            height: 50px;
+            width: auto;
+            vertical-align: middle;
+            max-width: 300px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
         
         .add-btn {
@@ -771,7 +779,9 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <h1>💰 Budget Dashboard</h1>
+                <h1>
+                    <img src="/static/images/logo.png" alt="BudgetWatch" class="logo">
+                </h1>
                 <div class="user-info">
                     <span class="username">Welcome, {{ session['username'] }}!</span>
                     <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
