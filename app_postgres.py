@@ -174,7 +174,7 @@ def index():
                            balance=0,
                            total_expected=0,
                            expected_vs_actual=[],
-                           credit_card_spending=0)
+                           credit_card_balance=0)
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -200,11 +200,11 @@ def index():
         ''', (user_id,))
         recent_transactions = cur.fetchall()
         
-        # Monthly totals
+        # Monthly totals (excluding credit card transactions from current month expenses)
         cur.execute('''
             SELECT 
                 SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expenses
+                SUM(CASE WHEN type = 'expense' AND payment_method != 'credit_card' THEN amount ELSE 0 END) as total_expenses
             FROM transactions 
             WHERE user_id = %s AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
         ''', (user_id,))
@@ -241,7 +241,7 @@ def index():
         ''', (user_id, current_month))
         expected_vs_actual = cur.fetchall()
         
-        # Get credit card spending for current month (using payment method)
+        # Get credit card balance for current month (amount you'll need to pay)
         cur.execute('''
             SELECT COALESCE(SUM(amount), 0) as credit_card_total
             FROM transactions 
@@ -251,7 +251,7 @@ def index():
                 AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
         ''', (user_id,))
         credit_card_result = cur.fetchone()
-        credit_card_spending = float(credit_card_result['credit_card_total'] or 0)
+        credit_card_balance = float(credit_card_result['credit_card_total'] or 0)
         
         # Calculate spendable money
         spendable_money = total_income - total_expenses - total_expected
@@ -296,7 +296,7 @@ def index():
                            balance=balance,
                            total_expected=total_expected,
                            expected_vs_actual=expected_vs_actual,
-                           credit_card_spending=credit_card_spending)
+                           credit_card_balance=credit_card_balance)
                            
     except Exception as e:
         print(f"Error in index route: {e}")
@@ -311,7 +311,7 @@ def index():
                            balance=0,
                            total_expected=0,
                            expected_vs_actual=[],
-                           credit_card_spending=0)
+                           credit_card_balance=0)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

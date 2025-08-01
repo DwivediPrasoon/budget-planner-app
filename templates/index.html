@@ -804,15 +804,15 @@
         
 
         
-        {% if credit_card_spending > 0 %}
+        {% if credit_card_balance > 0 %}
         <div class="credit-card-info-section">
             <div class="section-header">
-                <h3>💳 Credit Card Spending</h3>
+                <h3>💳 Credit Card Balance</h3>
             </div>
             <div class="credit-card-info">
-                <div class="credit-card-amount">₹{{ "%.2f"|format(credit_card_spending) }}</div>
-                <div class="credit-card-label">This Month's Credit Card Spending</div>
-                <div class="credit-card-note">💡 Automatically added to next month's expected expenses</div>
+                <div class="credit-card-amount">₹{{ "%.2f"|format(credit_card_balance) }}</div>
+                <div class="credit-card-label">Amount Due Next Month</div>
+                <div class="credit-card-note">💡 This amount will be added to next month's expected expenses</div>
             </div>
         </div>
         {% endif %}
