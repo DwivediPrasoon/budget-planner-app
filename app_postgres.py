@@ -667,11 +667,11 @@ def apply_template(template_id):
         current_month = datetime.now().strftime('%Y-%m')
         
         # Insert template expenses for current month
-        for category, amount in template_expenses:
+        for expense in template_expenses:
             cur.execute('''
                 INSERT INTO expected_expenses (user_id, category, amount, month_year, is_template)
                 VALUES (%s, %s, %s, %s, FALSE)
-            ''', (user_id, category, amount, current_month))
+            ''', (user_id, expense['category'], expense['amount'], current_month))
         
         conn.commit()
         cur.close()
@@ -759,8 +759,8 @@ def add_template():
             current_expenses = cur.fetchall()
             
             if not current_expenses:
-                flash('No expected expenses found for current month', 'error')
-                return render_template('add_template.html')
+                flash('You need to add expected expenses for the current month before creating a template. Please add some expected expenses first!', 'error')
+                return redirect(url_for('expected_expenses'))
             
             # Create template
             cur.execute('''
@@ -769,11 +769,11 @@ def add_template():
             ''', (user_id, name, description))
             
             # Insert template expenses
-            for category, amount in current_expenses:
+            for expense in current_expenses:
                 cur.execute('''
                     INSERT INTO expected_expenses (user_id, category, amount, month_year, is_template, template_name)
                     VALUES (%s, %s, %s, %s, TRUE, %s)
-                ''', (user_id, category, amount, current_month, name))
+                ''', (user_id, expense['category'], expense['amount'], current_month, name))
             
             conn.commit()
             cur.close()
