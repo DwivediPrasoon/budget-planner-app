@@ -501,7 +501,11 @@ def expected_expenses():
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Get current month
         current_month = datetime.now().strftime('%Y-%m')
@@ -550,11 +554,15 @@ def add_expected_expense():
             return render_template('add_expected_expense.html')
         
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             # Get user ID
             cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-            user_id = cur.fetchone()[0]
+            user_result = cur.fetchone()
+            if not user_result:
+                flash('User not found', 'error')
+                return redirect(url_for('logout'))
+            user_id = user_result['id']
             
             # Insert expected expense
             cur.execute('''
@@ -588,11 +596,15 @@ def delete_expected_expense(expense_id):
         return redirect(url_for('expected_expenses'))
     
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Delete expected expense
         cur.execute('''
@@ -625,11 +637,15 @@ def apply_template(template_id):
         return redirect(url_for('expected_expenses'))
     
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Get template name
         cur.execute('SELECT name FROM budget_templates WHERE id = %s AND user_id = %s', (template_id, user_id))
@@ -638,7 +654,7 @@ def apply_template(template_id):
             flash('Template not found', 'error')
             return redirect(url_for('expected_expenses'))
         
-        template_name = template[0]
+        template_name = template['name']
         
         # Get template expenses
         cur.execute('''
