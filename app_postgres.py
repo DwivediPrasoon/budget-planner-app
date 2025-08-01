@@ -1053,12 +1053,15 @@ def categories():
         cur.close()
         conn.close()
         
+        print(f"📊 Rendering categories page with {len(categories)} categories")
+        for cat in categories:
+            print(f"  - {cat['name']} ({cat['type']})")
         return render_template('categories.html', categories=categories)
         
     except Exception as e:
         print(f"Categories error: {e}")
         flash('Error loading categories', 'error')
-        return render_template('categories.html')
+        return render_template('categories.html', categories=[])
 
 @app.route('/add_category', methods=['GET', 'POST'])
 @login_required

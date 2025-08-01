@@ -249,8 +249,15 @@
                     </div>
                 {% endif %}
             {% endwith %}
-            {% set expense_categories = categories|selectattr('type', 'equalto', 'expense')|list %}
-            {% set income_categories = categories|selectattr('type', 'equalto', 'income')|list %}
+            {% set expense_categories = [] %}
+            {% set income_categories = [] %}
+            {% for category in categories %}
+                {% if category.type == 'expense' %}
+                    {% set _ = expense_categories.append(category) %}
+                {% elif category.type == 'income' %}
+                    {% set _ = income_categories.append(category) %}
+                {% endif %}
+            {% endfor %}
             
             {% if expense_categories %}
             <div class="category-section">
