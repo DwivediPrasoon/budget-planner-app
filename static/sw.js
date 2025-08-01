@@ -1,9 +1,7 @@
 const CACHE_NAME = 'budget-planner-v1';
 const urlsToCache = [
   '/',
-  '/static/manifest.json',
-  '/static/icon-192.png',
-  '/static/icon-512.png'
+  '/static/manifest.json'
 ];
 
 self.addEventListener('install', function(event) {
