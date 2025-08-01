@@ -981,12 +981,40 @@ def all_transactions():
         ''', (user_id,))
         categories = [row['name'] for row in cur.fetchall()]
         
+        # Get available months and weeks for filters
+        cur.execute('''
+            SELECT DISTINCT TO_CHAR(date, 'YYYY-MM') as month 
+            FROM transactions 
+            WHERE user_id = %s 
+            ORDER BY month DESC
+        ''', (user_id,))
+        available_months = [row['month'] for row in cur.fetchall()]
+        
+        cur.execute('''
+            SELECT DISTINCT TO_CHAR(date, 'YYYY-"W"IW') as week 
+            FROM transactions 
+            WHERE user_id = %s 
+            ORDER BY week DESC
+        ''', (user_id,))
+        available_weeks = [row['week'] for row in cur.fetchall()]
+        
+        cur.execute('''
+            SELECT DISTINCT category 
+            FROM transactions 
+            WHERE user_id = %s 
+            ORDER BY category
+        ''', (user_id,))
+        available_categories = [row['category'] for row in cur.fetchall()]
+        
         cur.close()
         conn.close()
         
         return render_template('all_transactions.html',
                            transactions=transactions,
                            categories=categories,
+                           available_months=available_months,
+                           available_weeks=available_weeks,
+                           available_categories=available_categories,
                            month_filter=month_filter,
                            week_filter=week_filter,
                            category_filter=category_filter,
