@@ -253,18 +253,8 @@
             <!-- DEBUG: Categories count: {{ categories|length }} -->
             {% if categories %}
                 <!-- DEBUG: Categories exist -->
-                {% set has_expense = false %}
-                {% set has_income = false %}
-                {% for category in categories %}
-                    <!-- DEBUG: Category {{ category.name }} ({{ category.type }}) -->
-                    {% if category.type == 'expense' %}
-                        {% set has_expense = true %}
-                    {% elif category.type == 'income' %}
-                        {% set has_income = true %}
-                    {% endif %}
-                {% endfor %}
                 
-                {% if has_expense %}
+                <!-- Expense Categories -->
                 <div class="category-section">
                     <div class="section-header expense">
                         💸 Expense Categories
@@ -280,9 +270,8 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-                {% endif %}
                 
-                {% if has_income %}
+                <!-- Income Categories -->
                 <div class="category-section">
                     <div class="section-header income">
                         💰 Income Categories
@@ -298,7 +287,6 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-                {% endif %}
             {% else %}
             <div class="empty-state">
                 <h3>No categories yet</h3>
