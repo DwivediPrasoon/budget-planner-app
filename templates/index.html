@@ -279,12 +279,17 @@
         .charts-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.5s ease;
-            margin-top: 15px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 0;
+            opacity: 0;
+            transform: translateY(-10px);
         }
         
         .charts-content.show {
             max-height: 2000px;
+            margin-top: 15px;
+            opacity: 1;
+            transform: translateY(0);
         }
         
         .summary-cards {
@@ -1324,6 +1329,10 @@
             const chartsContent = document.getElementById('chartsContent');
             const toggleButton = document.querySelector('.charts-toggle');
             
+            // Prevent multiple rapid clicks
+            if (toggleButton.disabled) return;
+            toggleButton.disabled = true;
+            
             chartsContent.classList.toggle('show');
             toggleButton.classList.toggle('active');
             
@@ -1334,6 +1343,11 @@
             } else {
                 toggleText.textContent = 'Show Analytics';
             }
+            
+            // Re-enable button after animation
+            setTimeout(() => {
+                toggleButton.disabled = false;
+            }, 400);
         }
         
         // PWA installation prompt
