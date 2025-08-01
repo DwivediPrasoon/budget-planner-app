@@ -996,6 +996,7 @@ def chart_data():
     """API endpoint for chart data"""
     conn = get_db_connection()
     if not conn:
+        print("❌ Database connection failed in chart_data")
         return jsonify({})
     
     try:
@@ -1003,7 +1004,13 @@ def chart_data():
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            print(f"❌ User not found: {session['username']}")
+            return jsonify({})
+        
+        user_id = user_result['id']
+        print(f"✅ User ID: {user_id}")
         
         # Monthly data for line chart
         cur.execute('''
@@ -1017,6 +1024,7 @@ def chart_data():
             ORDER BY month
         ''', (user_id,))
         monthly_data = cur.fetchall()
+        print(f"📊 Monthly data rows: {len(monthly_data)}")
         
         # Category data for doughnut chart
         cur.execute('''
@@ -1028,11 +1036,10 @@ def chart_data():
             ORDER BY total DESC
         ''', (user_id,))
         category_data = cur.fetchall()
+        print(f"📊 Category data rows: {len(category_data)}")
         
-        cur.close()
-        conn.close()
-        
-        return jsonify({
+        # Create response data
+        response_data = {
             'monthly': {
                 'labels': [row['month'] for row in monthly_data],
                 'income': [float(row['income'] or 0) for row in monthly_data],
@@ -1042,10 +1049,17 @@ def chart_data():
                 'labels': [row['category'] for row in category_data],
                 'data': [float(row['total'] or 0) for row in category_data]
             }
-        })
+        }
+        
+        print(f"📊 Response data: {response_data}")
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify(response_data)
         
     except Exception as e:
-        print(f"Chart data error: {e}")
+        print(f"❌ Chart data error: {e}")
         return jsonify({})
 
 if __name__ == '__main__':

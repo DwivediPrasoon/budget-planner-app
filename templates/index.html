@@ -860,6 +860,14 @@
                 // Check if data exists and has the expected structure
                 if (!data || !data.monthly || !data.categories) {
                     console.error('Invalid chart data structure:', data);
+                    showEmptyCharts();
+                    return;
+                }
+                
+                // Check if there's any data to display
+                if (data.monthly.labels.length === 0 && data.categories.labels.length === 0) {
+                    console.log('No chart data available - showing empty state');
+                    showEmptyCharts();
                     return;
                 }
                 
@@ -1334,6 +1342,30 @@
                     categoryTrendChart.innerHTML = '<div style="text-align: center;"><p>No category trend data available</p><p>Add transactions to see spending patterns</p></div>';
                 }
             });
+        
+        // Show empty charts state
+        function showEmptyCharts() {
+            const chartContainers = document.querySelectorAll('.chart-container');
+            chartContainers.forEach(container => {
+                const canvas = container.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.display = 'none';
+                }
+                
+                const title = container.querySelector('h3');
+                if (title) {
+                    container.innerHTML = `
+                        <h3>${title.textContent}</h3>
+                        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #666; font-size: 14px;">
+                            <div style="text-align: center;">
+                                <p>No data available</p>
+                                <p>Add some transactions to see charts!</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
         
         // Charts toggle function
         function toggleCharts() {
