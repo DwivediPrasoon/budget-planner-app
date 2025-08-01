@@ -209,8 +209,8 @@
         </div>
         
         <div class="categories-container">
-            {% set expense_categories = categories|selectattr('2', 'equalto', 'expense')|list %}
-            {% set income_categories = categories|selectattr('2', 'equalto', 'income')|list %}
+            {% set expense_categories = categories|selectattr('type', 'equalto', 'expense')|list %}
+            {% set income_categories = categories|selectattr('type', 'equalto', 'income')|list %}
             
             {% if expense_categories %}
             <div class="category-section">
@@ -219,8 +219,8 @@
                 </div>
                 {% for category in expense_categories %}
                 <div class="category-item">
-                    <div class="category-name">{{ category[1] }}</div>
-                    <form method="POST" action="{{ url_for('delete_category', category_id=category[0]) }}" style="display: inline;">
+                    <div class="category-name">{{ category.name }}</div>
+                    <form method="POST" action="{{ url_for('delete_category', category_id=category.id) }}" style="display: inline;">
                         <button type="submit" class="delete-btn" onclick="return confirm('Delete this category?')">Delete</button>
                     </form>
                 </div>
@@ -235,8 +235,8 @@
                 </div>
                 {% for category in income_categories %}
                 <div class="category-item">
-                    <div class="category-name">{{ category[1] }}</div>
-                    <form method="POST" action="{{ url_for('delete_category', category_id=category[0]) }}" style="display: inline;">
+                    <div class="category-name">{{ category.name }}</div>
+                    <form method="POST" action="{{ url_for('delete_category', category_id=category.id) }}" style="display: inline;">
                         <button type="submit" class="delete-btn" onclick="return confirm('Delete this category?')">Delete</button>
                     </form>
                 </div>
