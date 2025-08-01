@@ -266,6 +266,18 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="payment_method">Payment Method</label>
+                    <select id="payment_method" name="payment_method" required>
+                        <option value="cash">💵 Cash</option>
+                        <option value="credit_card">💳 Credit Card</option>
+                        <option value="debit_card">🏦 Debit Card</option>
+                        <option value="bank_transfer">🏛️ Bank Transfer</option>
+                        <option value="upi">📱 UPI</option>
+                        <option value="other">📋 Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
                     <label for="description">Description (Optional)</label>
                     <textarea id="description" name="description" placeholder="Add details about this transaction..."></textarea>
                 </div>

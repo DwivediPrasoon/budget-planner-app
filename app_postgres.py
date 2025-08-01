@@ -69,6 +69,7 @@ def init_db():
                 category VARCHAR(100) NOT NULL,
                 description TEXT,
                 type VARCHAR(20) DEFAULT 'expense',
+                payment_method VARCHAR(50) DEFAULT 'cash',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -108,6 +109,17 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Add payment_method column to existing transactions table if it doesn't exist
+        try:
+            cur.execute('''
+                ALTER TABLE transactions 
+                ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cash'
+            ''')
+            conn.commit()
+            print("✅ Payment method column added to transactions table")
+        except Exception as e:
+            print(f"⚠️ Payment method column already exists or error: {e}")
         
         conn.commit()
         cur.close()
@@ -409,6 +421,7 @@ def add_transaction():
         category = request.form['category']
         description = request.form['description']
         transaction_type = request.form.get('type', 'expense')
+        payment_method = request.form.get('payment_method', 'cash')
         
         conn = get_db_connection()
         if not conn:
@@ -428,12 +441,12 @@ def add_transaction():
             
             # Insert transaction
             cur.execute('''
-                INSERT INTO transactions (user_id, date, amount, category, description, type)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            ''', (user_id, date, amount, category, description, transaction_type))
+                INSERT INTO transactions (user_id, date, amount, category, description, type, payment_method)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', (user_id, date, amount, category, description, transaction_type, payment_method))
             
             # If this is a credit card transaction, automatically create expected expense for next month
-            if category == 'Credit Card' and transaction_type == 'expense':
+            if payment_method == 'credit_card' and transaction_type == 'expense':
                 # Calculate next month
                 from datetime import datetime, timedelta
                 current_date = datetime.strptime(date, '%Y-%m-%d')

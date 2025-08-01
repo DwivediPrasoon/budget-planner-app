@@ -626,6 +626,13 @@
             color: #666;
         }
         
+        .transaction-payment-method {
+            color: #007bff;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        
         .transaction-amount {
             font-weight: 700;
             font-size: 1.1rem;
@@ -856,6 +863,15 @@
                     <div class="transaction-info">
                         <div class="transaction-date">{{ t.date }}</div>
                         <div class="transaction-category">{{ t.category }}</div>
+                        <div class="transaction-payment-method">
+                            {% if t.payment_method == 'credit_card' %}💳
+                            {% elif t.payment_method == 'debit_card' %}🏦
+                            {% elif t.payment_method == 'bank_transfer' %}🏛️
+                            {% elif t.payment_method == 'upi' %}📱
+                            {% elif t.payment_method == 'other' %}📋
+                            {% else %}💵{% endif %}
+                            {{ t.payment_method.replace('_', ' ').title() }}
+                        </div>
                         {% if t.description %}
                         <div class="transaction-description">{{ t.description }}</div>
                         {% endif %}
