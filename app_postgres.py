@@ -702,7 +702,11 @@ def templates():
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Get templates
         cur.execute('''
@@ -736,11 +740,15 @@ def add_template():
             return render_template('add_template.html')
         
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             # Get user ID
             cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-            user_id = cur.fetchone()[0]
+            user_result = cur.fetchone()
+            if not user_result:
+                flash('User not found', 'error')
+                return redirect(url_for('logout'))
+            user_id = user_result['id']
             
             # Get current month's expected expenses
             current_month = datetime.now().strftime('%Y-%m')
@@ -793,11 +801,15 @@ def delete_template(template_id):
         return redirect(url_for('templates'))
     
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
         # Get user ID
         cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
-        user_id = cur.fetchone()[0]
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
         
         # Get template name
         cur.execute('SELECT name FROM budget_templates WHERE id = %s AND user_id = %s', (template_id, user_id))
@@ -806,7 +818,7 @@ def delete_template(template_id):
             flash('Template not found', 'error')
             return redirect(url_for('templates'))
         
-        template_name = template[0]
+        template_name = template['name']
         
         # Delete template expenses
         cur.execute('''

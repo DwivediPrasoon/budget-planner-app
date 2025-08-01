@@ -265,13 +265,13 @@
                 <div class="template-item">
                     <div class="template-header">
                         <div class="template-info">
-                            <div class="template-name">{{ template[1] }}</div>
-                            <div class="template-description">{{ template[2] or 'No description provided' }}</div>
-                            <div class="template-date">Created: {{ template[3] }}</div>
+                            <div class="template-name">{{ template.name }}</div>
+                            <div class="template-description">{{ template.description or 'No description provided' }}</div>
+                            <div class="template-date">Created: {{ template.created_at }}</div>
                         </div>
                         <div class="template-actions">
                             <a href="{{ url_for('expected_expenses') }}" class="apply-btn">Apply to Current Month</a>
-                            <form method="POST" action="{{ url_for('delete_template', template_id=template[0]) }}" style="display: inline;">
+                            <form method="POST" action="{{ url_for('delete_template', template_id=template.id) }}" style="display: inline;">
                                 <button type="submit" class="delete-btn" onclick="return confirm('Delete this template? This action cannot be undone.')">Delete</button>
                             </form>
                         </div>
