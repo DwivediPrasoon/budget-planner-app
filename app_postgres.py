@@ -1130,17 +1130,40 @@ def delete_category(category_id):
             return redirect(url_for('logout'))
         user_id = user_result['id']
         
+        # Check if category exists before deletion
+        cur.execute('''
+            SELECT id, name FROM categories 
+            WHERE id = %s AND user_id = %s
+        ''', (category_id, user_id))
+        category_check = cur.fetchone()
+        
+        if not category_check:
+            flash('Category not found or you do not have permission to delete it', 'error')
+            cur.close()
+            conn.close()
+            return redirect(url_for('categories'))
+        
+        print(f"🗑️ Deleting category: {category_check['name']} (ID: {category_id}) for user: {user_id}")
+        
         # Delete category
         cur.execute('''
             DELETE FROM categories 
             WHERE id = %s AND user_id = %s
         ''', (category_id, user_id))
         
+        # Check if deletion was successful
+        deleted_rows = cur.rowcount
+        print(f"🗑️ Deleted {deleted_rows} rows")
+        
         conn.commit()
         cur.close()
         conn.close()
         
-        flash('Category deleted successfully!', 'success')
+        if deleted_rows > 0:
+            flash('Category deleted successfully!', 'success')
+        else:
+            flash('Failed to delete category', 'error')
+        
         return redirect(url_for('categories'))
         
     except Exception as e:
