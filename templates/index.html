@@ -341,6 +341,42 @@
             color: #dc3545;
         }
         
+        .credit-card-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .credit-card-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .credit-card-info {
+            flex: 1;
+        }
+        
+        .credit-card-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #dc3545;
+            margin-bottom: 5px;
+        }
+        
+        .credit-card-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .credit-card-actions {
+            text-align: right;
+        }
+        
         .budget-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -723,6 +759,24 @@
                 <div class="amount {% if spendable_money < 0 %}negative{% endif %}">₹{{ "%.2f"|format(spendable_money) }}</div>
             </div>
         </div>
+        
+        {% if credit_card_spending > 0 %}
+        <div class="credit-card-section">
+            <div class="section-header">
+                <h3>💳 Credit Card Spending</h3>
+                <a href="{{ url_for('add_expected_expense') }}" class="budget-link">Plan Next Month Payment</a>
+            </div>
+            <div class="credit-card-summary">
+                <div class="credit-card-info">
+                    <div class="credit-card-amount">₹{{ "%.2f"|format(credit_card_spending) }}</div>
+                    <div class="credit-card-label">This Month's Credit Card Spending</div>
+                </div>
+                <div class="credit-card-actions">
+                    <a href="{{ url_for('add_expected_expense') }}" class="setup-btn">+ Add as Expected Expense for Next Month</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         
         {% if expected_vs_actual %}
         <div class="budget-section">

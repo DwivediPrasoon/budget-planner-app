@@ -149,7 +149,8 @@ def index():
                            spendable_money=0,
                            balance=0,
                            total_expected=0,
-                           expected_vs_actual=[])
+                           expected_vs_actual=[],
+                           credit_card_spending=0)
     
     try:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -216,6 +217,18 @@ def index():
         ''', (user_id, current_month))
         expected_vs_actual = cur.fetchall()
         
+        # Get credit card spending for current month
+        cur.execute('''
+            SELECT COALESCE(SUM(amount), 0) as credit_card_total
+            FROM transactions 
+            WHERE user_id = %s 
+                AND category = 'Credit Card' 
+                AND type = 'expense'
+                AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)
+        ''', (user_id,))
+        credit_card_result = cur.fetchone()
+        credit_card_spending = float(credit_card_result['credit_card_total'] or 0)
+        
         # Calculate spendable money
         spendable_money = total_income - total_expenses - total_expected
         
@@ -258,7 +271,8 @@ def index():
                            spendable_money=spendable_money,
                            balance=balance,
                            total_expected=total_expected,
-                           expected_vs_actual=expected_vs_actual)
+                           expected_vs_actual=expected_vs_actual,
+                           credit_card_spending=credit_card_spending)
                            
     except Exception as e:
         print(f"Error in index route: {e}")
@@ -272,7 +286,8 @@ def index():
                            spendable_money=0,
                            balance=0,
                            total_expected=0,
-                           expected_vs_actual=[])
+                           expected_vs_actual=[],
+                           credit_card_spending=0)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -947,7 +962,8 @@ def categories():
                 ('Shopping', 'expense'),
                 ('Bills', 'expense'),
                 ('Entertainment', 'expense'),
-                ('Healthcare', 'expense')
+                ('Healthcare', 'expense'),
+                ('Credit Card', 'expense')
             ]
             
             for category_name, category_type in default_categories:
