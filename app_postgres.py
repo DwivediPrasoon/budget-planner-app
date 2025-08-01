@@ -584,7 +584,43 @@ def add_expected_expense():
             cur.close()
             conn.close()
     
-    return render_template('add_expected_expense.html')
+    # GET request - show form with categories
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return render_template('add_expected_expense.html')
+    
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Get user ID
+        cur.execute('SELECT id FROM users WHERE username = %s', (session['username'],))
+        user_result = cur.fetchone()
+        if not user_result:
+            flash('User not found', 'error')
+            return redirect(url_for('logout'))
+        user_id = user_result['id']
+        
+        # Get categories
+        cur.execute('''
+            SELECT name FROM categories 
+            WHERE user_id = %s 
+            ORDER BY type, name
+        ''', (user_id,))
+        categories_result = cur.fetchall()
+        
+        # Extract category names
+        categories = [cat['name'] for cat in categories_result]
+        
+        cur.close()
+        conn.close()
+        
+        return render_template('add_expected_expense.html', categories=categories, today=datetime.now().strftime('%Y-%m'))
+        
+    except Exception as e:
+        print(f"Add expected expense GET error: {e}")
+        flash('Error loading categories', 'error')
+        return render_template('add_expected_expense.html')
 
 @app.route('/delete_expected_expense/<int:expense_id>', methods=['POST'])
 @login_required
