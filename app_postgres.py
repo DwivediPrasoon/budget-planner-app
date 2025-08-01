@@ -982,6 +982,30 @@ def categories():
                 ORDER BY type, name
             ''', (user_id,))
             categories = cur.fetchall()
+        else:
+            # Check if Credit Card category exists, add if not
+            cur.execute('''
+                SELECT id FROM categories 
+                WHERE user_id = %s AND name = 'Credit Card'
+            ''', (user_id,))
+            credit_card_exists = cur.fetchone()
+            
+            if not credit_card_exists:
+                print(f"📝 Adding Credit Card category for user {session['username']}")
+                cur.execute('''
+                    INSERT INTO categories (user_id, name, type) 
+                    VALUES (%s, %s, %s)
+                ''', (user_id, 'Credit Card', 'expense'))
+                conn.commit()
+                print("✅ Added Credit Card category")
+                
+                # Fetch categories again to include the new one
+                cur.execute('''
+                    SELECT * FROM categories 
+                    WHERE user_id = %s 
+                    ORDER BY type, name
+                ''', (user_id,))
+                categories = cur.fetchall()
         
         cur.close()
         conn.close()
