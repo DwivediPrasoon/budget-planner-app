@@ -1,3 +1,4 @@
 flask
 gunicorn
-psycopg2-binary 
+psycopg2-binary
+cryptography==41.0.7 

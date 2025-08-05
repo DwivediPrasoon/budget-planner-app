@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 import hashlib
 import secrets
+from encryption_utils import db_encryption, initialize_encryption
 app = Flask(__name__, static_folder='static')
 
 # Configuration for Railway deployment
@@ -47,17 +48,19 @@ def init_db():
     try:
         cur = conn.cursor()
         
-        # Create users table
+        # Create users table with encryption support
         cur.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(50) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
+                password_salt VARCHAR(255) NOT NULL,
+                encryption_salt VARCHAR(255),
                 created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
-        # Create transactions table
+        # Create transactions table with encryption support
         cur.execute('''
             CREATE TABLE IF NOT EXISTS transactions (
                 id SERIAL PRIMARY KEY,
@@ -66,6 +69,8 @@ def init_db():
                 amount DECIMAL(10,2) NOT NULL,
                 category VARCHAR(100) NOT NULL,
                 description TEXT,
+                description_encrypted TEXT,
+                description_salt VARCHAR(255),
                 type VARCHAR(20) DEFAULT 'expense',
                 payment_method VARCHAR(50) DEFAULT 'cash',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -108,14 +113,39 @@ def init_db():
             )
         ''')
         
-        # Add payment_method column to existing transactions table if it doesn't exist
+        # Add encryption support columns to existing tables
         try:
+            # Add password_salt column to users table
+            cur.execute('''
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS password_salt VARCHAR(255) DEFAULT ''
+            ''')
+            
+            # Add encryption_salt column to users table
+            cur.execute('''
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS encryption_salt VARCHAR(255)
+            ''')
+            
+            # Add encrypted description columns to transactions table
+            cur.execute('''
+                ALTER TABLE transactions 
+                ADD COLUMN IF NOT EXISTS description_encrypted TEXT
+            ''')
+            
+            cur.execute('''
+                ALTER TABLE transactions 
+                ADD COLUMN IF NOT EXISTS description_salt VARCHAR(255)
+            ''')
+            
+            # Add payment_method column to existing transactions table if it doesn't exist
             cur.execute('''
                 ALTER TABLE transactions 
                 ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cash'
             ''')
+            
             conn.commit()
-            print("✅ Payment method column added to transactions table")
+            print("✅ Encryption support columns added to database tables")
             
             # Migrate old "Credit Card" category transactions to use payment_method
             cur.execute('''
@@ -129,7 +159,7 @@ def init_db():
                 print(f"✅ Migrated {migrated_count} old 'Credit Card' transactions to use payment_method")
             
         except Exception as e:
-            print(f"⚠️ Payment method column already exists or error: {e}")
+            print(f"⚠️ Encryption columns already exist or error: {e}")
         
         conn.commit()
         cur.close()
@@ -142,8 +172,8 @@ def init_db():
         return False
 
 def hash_password(password):
-    """Hash password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using PBKDF2 with salt"""
+    return db_encryption.hash_password(password)
 
 def login_required(f):
     """Decorator to require login"""
@@ -190,14 +220,30 @@ def index():
         # Get current month data
         current_month = datetime.now().strftime('%Y-%m')
         
-        # Recent transactions (last 5)
+        # Recent transactions (last 5) with decryption
         cur.execute('''
             SELECT * FROM transactions 
             WHERE user_id = %s 
             ORDER BY date DESC, id DESC 
             LIMIT 5
         ''', (user_id,))
-        recent_transactions = cur.fetchall()
+        recent_transactions_raw = cur.fetchall()
+        
+        # Decrypt transaction data
+        user_password = session.get('user_password', '')
+        recent_transactions = []
+        for transaction in recent_transactions_raw:
+            transaction_dict = dict(transaction)
+            if user_password and transaction_dict.get('description_encrypted'):
+                try:
+                    decrypted_data = db_encryption.decrypt_transaction_data(transaction_dict, user_password)
+                    recent_transactions.append(decrypted_data)
+                except Exception as e:
+                    print(f"Decryption error for transaction {transaction_dict['id']}: {e}")
+                    # Use original data if decryption fails
+                    recent_transactions.append(transaction_dict)
+            else:
+                recent_transactions.append(transaction_dict)
         
         # Monthly totals (excluding credit card transactions from current month expenses)
         cur.execute('''
@@ -340,8 +386,9 @@ def login():
             cur.execute('SELECT * FROM users WHERE username = %s', (username,))
             user = cur.fetchone()
             
-            if user and user['password_hash'] == hash_password(password):
+            if user and db_encryption.verify_password(password, user['password_hash'], user['password_salt']):
                 session['username'] = username
+                session['user_password'] = password  # Store for decryption
                 flash('Login successful!', 'success')
                 return redirect(url_for('index'))
             else:
@@ -382,11 +429,12 @@ def register():
                 flash('Username already exists', 'error')
                 return render_template('register.html')
             
-            # Create new user
+            # Create new user with encrypted password
+            password_data = hash_password(password)
             cur.execute('''
-                INSERT INTO users (username, password_hash) 
-                VALUES (%s, %s) RETURNING id
-            ''', (username, hash_password(password)))
+                INSERT INTO users (username, password_hash, password_salt) 
+                VALUES (%s, %s, %s) RETURNING id
+            ''', (username, password_data['hashed_password'], password_data['salt']))
             
             user_id = cur.fetchone()['id']
             
@@ -461,11 +509,33 @@ def add_transaction():
                 return redirect(url_for('logout'))
             user_id = user_result['id']
             
-            # Insert transaction
-            cur.execute('''
-                INSERT INTO transactions (user_id, date, amount, category, description, type, payment_method)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ''', (user_id, date, amount, category, description, transaction_type, payment_method))
+            # Encrypt sensitive transaction data
+            user_password = session.get('user_password', '')
+            transaction_data = {
+                'user_id': user_id,
+                'date': date,
+                'amount': amount,
+                'category': category,
+                'description': description,
+                'type': transaction_type,
+                'payment_method': payment_method
+            }
+            
+            # Encrypt description if user is logged in
+            if user_password and description:
+                encrypted_data = db_encryption.encrypt_transaction_data(transaction_data, user_password)
+                cur.execute('''
+                    INSERT INTO transactions (user_id, date, amount, category, description_encrypted, description_salt, type, payment_method)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (encrypted_data['user_id'], encrypted_data['date'], encrypted_data['amount'], 
+                      encrypted_data['category'], encrypted_data['description_encrypted'], 
+                      encrypted_data['description_salt'], encrypted_data['type'], encrypted_data['payment_method']))
+            else:
+                # Store unencrypted if no password available
+                cur.execute('''
+                    INSERT INTO transactions (user_id, date, amount, category, description, type, payment_method)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''', (user_id, date, amount, category, description, transaction_type, payment_method))
             
             # If this is a credit card transaction, automatically create expected expense for next month
             if payment_method == 'credit_card' and transaction_type == 'expense':
@@ -1230,7 +1300,23 @@ def all_transactions():
         query += ' ORDER BY date DESC, id DESC'
         
         cur.execute(query, params)
-        transactions = cur.fetchall()
+        transactions_raw = cur.fetchall()
+        
+        # Decrypt transaction data
+        user_password = session.get('user_password', '')
+        transactions = []
+        for transaction in transactions_raw:
+            transaction_dict = dict(transaction)
+            if user_password and transaction_dict.get('description_encrypted'):
+                try:
+                    decrypted_data = db_encryption.decrypt_transaction_data(transaction_dict, user_password)
+                    transactions.append(decrypted_data)
+                except Exception as e:
+                    print(f"Decryption error for transaction {transaction_dict['id']}: {e}")
+                    # Use original data if decryption fails
+                    transactions.append(transaction_dict)
+            else:
+                transactions.append(transaction_dict)
         
         # Get categories for filter
         cur.execute('''
@@ -1382,6 +1468,10 @@ def analytics_data():
         return jsonify({})
 
 if __name__ == '__main__':
+    # Initialize encryption system
+    initialize_encryption()
+    print("🔐 Encryption system initialized")
+    
     # Initialize database on startup
     if init_db():
         print("✅ Database initialized successfully")
