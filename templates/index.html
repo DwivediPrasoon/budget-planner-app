@@ -787,6 +787,148 @@
                 align-self: flex-end;
             }
         }
+        
+        /* About Section Styles */
+        .about-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 20px;
+            margin: 40px -20px -20px -20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .about-content h2 {
+            text-align: center;
+            color: #333;
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+        
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .about-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .about-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .about-card h3 {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .about-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .about-card ul, .about-card ol {
+            color: #666;
+            line-height: 1.6;
+            padding-left: 20px;
+        }
+        
+        .about-card li {
+            margin-bottom: 8px;
+        }
+        
+        .about-card strong {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .pwa-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .pwa-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .about-footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .about-footer p {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .tech-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+        }
+        
+        .tech-badge:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .about-section {
+                margin: 30px -15px -15px -15px;
+                padding: 30px 15px;
+            }
+            
+            .about-content h2 {
+                font-size: 1.8rem;
+                margin-bottom: 25px;
+            }
+            
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .about-card {
+                padding: 20px;
+            }
+            
+            .pwa-features, .tech-stack {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1085,5 +1227,65 @@
                 });
         }
     </script>
+    
+    <!-- About Section -->
+    <div class="about-section">
+        <div class="container">
+            <div class="about-content">
+                <h2>📊 About Budget Planner</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3>🎯 Purpose</h3>
+                        <p>Budget Planner is a comprehensive personal finance management tool designed to help you track your income, expenses, and plan your budget effectively. Take control of your financial future with smart spending insights and budget planning.</p>
+                    </div>
+                    
+                    <div class="about-card">
+                        <h3>💡 Key Features</h3>
+                        <ul>
+                            <li><strong>Transaction Tracking:</strong> Record and categorize all your income and expenses</li>
+                            <li><strong>Budget Planning:</strong> Set up expected expenses and track spending against budgets</li>
+                            <li><strong>Smart Analytics:</strong> Visual charts and insights into your spending patterns</li>
+                            <li><strong>Credit Card Management:</strong> Track credit card expenses and plan payments</li>
+                            <li><strong>Budget Templates:</strong> Save and reuse budget plans for different months</li>
+                            <li><strong>Spendable Money Calculator:</strong> Know exactly how much you can spend after accounting for planned expenses</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="about-card">
+                        <h3>🔧 How It Works</h3>
+                        <ol>
+                            <li><strong>Add Transactions:</strong> Record your daily income and expenses with categories</li>
+                            <li><strong>Set Expected Expenses:</strong> Plan your monthly budget for different categories</li>
+                            <li><strong>Track Progress:</strong> Monitor your spending against planned budgets</li>
+                            <li><strong>Analyze Patterns:</strong> Use insights to make better financial decisions</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="about-card">
+                        <h3>📱 Progressive Web App</h3>
+                        <p>This application works as a Progressive Web App (PWA), meaning you can install it on your device for quick access. It works offline and provides a native app-like experience.</p>
+                        <div class="pwa-features">
+                            <span class="pwa-badge">📱 Installable</span>
+                            <span class="pwa-badge">🌐 Offline Support</span>
+                            <span class="pwa-badge">⚡ Fast Loading</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="about-footer">
+                    <p>Built with ❤️ using Flask, PostgreSQL, and modern web technologies</p>
+                    <div class="tech-stack">
+                        <span class="tech-badge">Python</span>
+                        <span class="tech-badge">Flask</span>
+                        <span class="tech-badge">PostgreSQL</span>
+                        <span class="tech-badge">HTML5</span>
+                        <span class="tech-badge">CSS3</span>
+                        <span class="tech-badge">JavaScript</span>
+                        <span class="tech-badge">Chart.js</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 
