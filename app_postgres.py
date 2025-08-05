@@ -171,6 +171,7 @@ def index():
                            spendable_money=0,
                            balance=0,
                            total_expected=0,
+                           remaining_planned=0,
                            expected_vs_actual=[],
                            credit_card_balance=0)
     
@@ -251,8 +252,17 @@ def index():
         credit_card_result = cur.fetchone()
         credit_card_balance = float(credit_card_result['credit_card_total'] or 0)
         
-        # Calculate spendable money
-        spendable_money = total_income - total_expenses - total_expected
+        # Calculate remaining planned expenses (expected - actual spent on planned categories)
+        remaining_planned = 0
+        for item in expected_vs_actual:
+            expected_amount = float(item['expected_amount'] or 0)
+            actual_spent = float(item['actual_spent'] or 0)
+            remaining = expected_amount - actual_spent
+            if remaining > 0:
+                remaining_planned += remaining
+        
+        # Calculate spendable money (income - expenses - remaining planned expenses)
+        spendable_money = total_income - total_expenses - remaining_planned
         
         # Calculate balance (income - expenses, without expected expenses)
         balance = total_income - total_expenses
@@ -293,6 +303,7 @@ def index():
                            spendable_money=spendable_money,
                            balance=balance,
                            total_expected=total_expected,
+                           remaining_planned=remaining_planned,
                            expected_vs_actual=expected_vs_actual,
                            credit_card_balance=credit_card_balance)
                            
@@ -308,6 +319,7 @@ def index():
                            spendable_money=0,
                            balance=0,
                            total_expected=0,
+                           remaining_planned=0,
                            expected_vs_actual=[],
                            credit_card_balance=0)
 

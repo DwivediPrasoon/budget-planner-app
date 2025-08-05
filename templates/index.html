@@ -379,6 +379,14 @@
             color: #dc3545;
         }
         
+        .spendable-note {
+            color: #666;
+            font-size: 0.75rem;
+            font-style: italic;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
         .credit-card-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -836,6 +844,7 @@
             <div class="summary-card spendable">
                 <h3>Spendable Money</h3>
                 <div class="amount {% if spendable_money < 0 %}negative{% endif %}">₹{{ "%.2f"|format(spendable_money) }}</div>
+                <div class="spendable-note">💡 Income - Expenses - Remaining Planned Expenses</div>
             </div>
         </div>
         
